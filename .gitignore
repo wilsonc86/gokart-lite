@@ -1,0 +1,19 @@
+.DS_Store
+node_modules
+dist/dev
+dist/release/static/js/local.env.js
+gokart/static
+gokart/tmp
+src/apps/*-profile.js
+
+*.log
+*.sw*
+*.pyc
+.env
+venv/
+
+# Database/fixture dumps
+*.pgdump
+*.dump
+*.db
+*.sqlite3
