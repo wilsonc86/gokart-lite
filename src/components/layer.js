@@ -17,9 +17,11 @@ var Layer = function(layer) {
         throw "Can't create a instance of a abstract class"
     }
     var vm = this
-    this._id = layer["id"]
-    this._base = layer["base"]?true:false
-    this._options = layer.options || {}
+    $.each(layer,function(key,value) {
+        vm["_" + key] = value
+    })
+
+    this._options = this._options || {}
     $.each(this.defaultOptions,function(key,value){
         if (!(key in vm._options)) {
             vm._options[key] = value
@@ -37,6 +39,10 @@ var Layer = function(layer) {
     //register this layer
     _Layers[this._id] = this
 }
+//current base layer shown on map
+Layer.baselayer = null
+//current top layer shown on map
+Layer.toplayer = null
 //return a layer object
 //same layer id will return the same layer object
 Layer.getLayer = function(layer) {
@@ -52,17 +58,111 @@ Layer.getLayer = function(layer) {
         layer = layer
     } else {
         layerid = layer.id
-        if (layer.type === "wmsTileLayer") {
+        layer.serviceType = layer.serviceType || "WMTS"
+        if (layer.serviceType === "WMS") {
             layer = new WMSTileLayer(layer)
-        } else if (layer.type === "tileLayer") {
+        } else if (layer.serviceType === "WMTS") {
             layer = new TileLayer(layer)
         } else {
+            throw layer.serviceType + " not supported."
             layer = null
-            throw layer.type + " not supported."
         }
     }
     return layer
 }
+//load layers from csw and merge with layers configured in environment file; and then add them to map
+Layer.loadLayers = function(map) {
+    env.cswApp = (env.cswApp || env.app).toLowerCase()
+    var vm = this
+    var req = new window.XMLHttpRequest()
+    req.withCredentials = true
+    req.onload = function () {
+        var layers = []
+        JSON.parse(this.responseText).forEach(function (l) {
+          // add the base flag for layers tagged 'basemap'
+          if (l.tags.some(function (t) {return t.name === 'basemap'})) {
+              l.layerType = "baselayer"
+          } else {
+              l.layerType = "overlayer"
+          }
+          l.serviceType = "WMTS"
+  
+          layers.push(l)
+        })
+        //merge the layers loaded from csw with layer cofigured in environment files and set the zIndex configured in environment file
+        var zindex = 3
+        $.each(env.layers || [],function(index,l) {
+            var layer = layers.find(function(o) {return o.id === l.id})
+            if (layer) {
+                $.extend(layer,l)
+            } else {
+                layers.push(l)
+                layer = l
+            }
+            layer.options = layer.options || {}
+            if (layer.layerType === "baselayer") {
+                layer.options["zIndex"] = 1
+            } else if (layer.layerType === "toplayer") {
+                layer.options["zIndex"] = 1000
+            } else if (layer.options["zIndex"] && layer.options["zIndex"] >= 100 && layer.options["zIndex"] < 1000) {
+                //do nothine
+            } else {
+                layer.options["zIndex"] = zIndex
+                zIndex += 1
+            }
+        })
+
+        //set other options
+        $.each(layers,function(index,l) {
+            if (l.layerType === "baselayer") {
+                l.options["opacity"] = 1
+                l.options["zIndex"] = 1
+                if (l.options["zIndex"] === null || l.options["zIndex"] === undefined) {
+                }
+            } else if (l.layerType === "overlayer") {
+                if (l.options["zIndex"] === null || l.options["zIndex"] === undefined) {
+                    l.options["zIndex"] = 2
+                }
+                if (l.options["opacity"] === null || l.options["opacity"] === undefined) {
+                    l.options["opacity"] = 0.5
+                }
+            }  else {
+                l.options["zIndex"] = 1000
+                if (l.options["opacity"] === null || l.options["opacity"] === undefined) {
+                    l.options["opacity"] = 0.8
+                }
+            }
+        })
+
+        //add layers
+        $.each(layers,function(index,l){
+            try {
+                l = Layer.getLayer(l)
+            } catch(ex) {
+                alert(ex)
+                return
+            }
+            if (l.isBaselayer() && Layer.baselayer === null) {
+                l.setMap(map)
+            } else if (l.isToplayer() && Layer.toplayer === null) {
+                l.setMap(map)
+            } else if (l.isOverlayer()) {
+                l.setMap(map)
+            }
+
+        })
+    }
+    req.onerror = function (ev) {
+      var msg ='Couldn\'t load layer catalogue!' +  (req.statusText? (" (" + req.statusText + ")") : '')
+      console.error(msg)
+      alert(msg)
+    }
+    req.open('GET', env.cswService + "?format=json&application__name=" + env.cswApp)
+    req.send()
+
+
+}
+
 
 //Create a leaflet layer
 Layer.prototype._create = function() {
@@ -72,35 +172,63 @@ Layer.prototype._create = function() {
 Layer.prototype.getId = function() {
     return this._id
 }
-//return layer id
-Layer.prototype.isBaseLayer = function() {
-    return this._base
+//return true if it is a base layer
+Layer.prototype.isBaselayer = function() {
+    return this._layerType === "baselayer"
+}
+//return true if it is a overview layer
+Layer.prototype.isOverlayer = function() {
+    return this._layerType === "overlayer"
+}
+//return true if it is a top layer
+Layer.prototype.isToplayer = function() {
+    return this._layerType === "toplayer"
 }
 
 //add to map if map is not null; remove from map if map is null
 Layer.prototype.setMap = function(map) {
     if (map) {
         //add to map
-        if (this._map && this._map === map) {
-            //already add to the map
+        if (this._map && this._map) {
+            //already added to the map
             return
-        } else if (this._map) {
-            //alread add to a different map
-            this._mapLayer.remove()
-            this._map = null
         } else if (!this._mapLayer) {
             //mapLayer is not created
             this._create()
         }
-        this._mapLayer.addTo(map)
+        if (this.isBaselayer() && Layer.baselayer) {
+            //remove the current base layer from map
+            layer.baselayer.setMap(null)
+        } else if (this.isToplayer() && Layer.toplayer) {
+            //remove the current top layer from map
+            layer.toplayer.setMap(null)
+        }
+        this._mapLayer.addTo(map.getLMap())
+
         this._map = map
+        if (this.isBaselayer()) {
+            Layer.baselayer = this
+        } else if (this.isToplayer()) {
+            Layer.toplayer = this
+            this._map.featureInfo.setLayer(this)
+        }
 
     } else if(this._map) {
         //remove from map
         this._mapLayer.remove()
+        if (Layer.baselayer === this) {
+            //it is a current base layer
+            Layer.baselayer = null
+        } else if (Layer.toplayer === this) {
+            //it is a current top layer
+            Layer.toplayer = null
+            this._map.featureInfo.setLayer(null)
+        }
         this._map = null
     }
 }
+
+
 //WMS tile layer
 var WMSTileLayer = function(layer) {
     Layer.call(this,layer)
@@ -133,6 +261,7 @@ WMSTileLayer.prototype._create = function() {
     this._mapLayer = L.tileLayer.wms(env.wmsService,this._options)
 }
 
+
 //Tile layer
 var TileLayer = function(layer) {
     Layer.call(this,layer)
@@ -158,4 +287,4 @@ TileLayer.prototype._create = function() {
     this._mapLayer = L.tileLayer(this._tileUrl,this._options)
 }
 
-export default Layer
+export {Layer}
