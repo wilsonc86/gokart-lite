@@ -10,7 +10,7 @@ import {FeatureInfo} from './interactions.js'
 var Map = function (mapid) {
     this._mapid = mapid
     this._mapElement = $("#" + mapid)
-    this._options = env["map"] || {}
+    this._options = gokartEnv["map"] || {}
     if ("crs" in this._options && typeof(this._options["crs"]) === "string") {
         this._options["crs"] = getCRS(this._options["crs"])
     }

@@ -5,6 +5,8 @@ import re
 import uwsgi
 import base64
 import os
+import traceback
+import sys
 
 import bottle
 
@@ -25,7 +27,7 @@ def profile(app,dist):
         profile = None
         appPath = os.path.join(BASE_DIST_PATH,dist,"{}.js".format(app))
         if not os.path.exists(appPath):
-            raise Exception("Application({}<{}>) not found".format(app,dist))
+            appPath = os.path.join(BASE_DIST_PATH,dist,"sss.js")
     
         key = "{}_{}_profile".format(app,dist)
         profileChanged = False
@@ -87,9 +89,9 @@ def profile(app,dist):
         profile["profile"]["build"]["vendorMD5"] = vendorProfile["vendorMD5"]
     
         #get env profile
-        envPath = os.path.join(BASE_DIST_PATH,'release','static','js',"{}.env.js".format(ENV_TYPE))
+        envPath = os.path.join(BASE_DIST_PATH,'release','static','js',"{}-{}.env.js".format(app,ENV_TYPE))
         if not os.path.exists(envPath):
-            raise Exception("'{}.env.js' is missing.".format(ENV_TYPE))
+            raise Exception("'{}-{}.env.js' is missing.".format(app,ENV_TYPE))
         else:
             key = "{}_{}_profile".format("env",ENV_TYPE)
             profileChanged = False

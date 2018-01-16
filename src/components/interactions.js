@@ -11,13 +11,22 @@ var FeatureInfo = function(map,eventType) {
         throw "map is null"
     }
     this._map = map
+
+    var vm = this
+    $.each(gokartEnv.featureInfoPopup || {},function(key,value) {
+        vm["_" + key] = value
+    })
+    this._options = $.extend({},FeatureInfo.defaultOptions,this._options || {})
+
     this._layer = null
     this._eventType = eventType || "click"
     this._enabled = false
-    this._options = $.extend(FeatureInfo.defaultOptions,(env.featureInfoPopup && env.featureInfoPopup.options)?env.featureInfoPopup.options:{})
+    this._popup = L.popup(this._options).setContent("")
+
+    this._options = $.extend(FeatureInfo.defaultOptions,(gokartEnv.featureInfoPopup && gokartEnv.featureInfoPopup.options)?gokartEnv.featureInfoPopup.options:{})
 }
 FeatureInfo.defaultOptions = {
-    autoPan:false,
+    autoPan:true,
     closeButton:true,
 }
 //enable/disable this interaction
@@ -30,14 +39,14 @@ FeatureInfo.prototype.enable = function(enable) {
             if (!vm._layer._geometryColumn) {
                 buffer = 1
             } else {
-               url = env.wfsService + "/wfs?service=wfs&version=2.0&request=GetFeature&count=1&outputFormat=application%2Fjson&typeNames=" + vm._layer.getId() + "&cql_filter=CONTAINS(" + vm._layer._geometryColumn + ",POINT(" + ev.latlng.lat + " " + ev.latlng.lng + "))"
+               url = gokartEnv.wfsService + "/wfs?service=wfs&version=2.0&request=GetFeature&count=1&outputFormat=application%2Fjson&typeNames=" + vm._layer.getId() + "&cql_filter=CONTAINS(" + vm._layer._geometryColumn + ",POINT(" + ev.latlng.lat + " " + ev.latlng.lng + "))"
             }
         }
         if (!url) {
             var topLeft = vm._map.getLMap().layerPointToLatLng([ev.layerPoint.x - 10,ev.layerPoint.y - 10])
             var bottomRight = vm._map.getLMap().layerPointToLatLng([ev.layerPoint.x + 10,ev.layerPoint.y + 10])
             var bbox = "&bbox=" + bottomRight[1] + "," + topLeft[0] + "," + topLeft[1] + "," + bottomRight[0]
-            url = env.wfsService + "/wfs?service=wfs&version=2.0&request=GetFeature&count=1&outputFormat=application%2Fjson&typeNames=" + vm._layer.getId() + bbox
+            url = gokartEnv.wfsService + "/wfs?service=wfs&version=2.0&request=GetFeature&count=1&outputFormat=application%2Fjson&typeNames=" + vm._layer.getId() + bbox
         }
 
         $.ajax({
@@ -47,23 +56,38 @@ FeatureInfo.prototype.enable = function(enable) {
                 if (response.totalFeatures < 1) {
                     return
                 }
+                //populate the feature info
                 var msg = "<table id='feature-info'>"
                 var feat = response.features[0]
-                if (vm._layer.featureInfoProperties) {
-                    $.each(vm._layer.featureInfoProperties,function(index,k){
-                        msg += "<tr><th>" + k + "</th><td>" + (feat.properties[k] === null)?"":feat.properties[k] + "</td></tr>"
+                if (vm._layer._featureInfo.properties) {
+                    $.each(vm._layer._featureInfo.properties,function(index,k){
+                        msg += "<tr><th>" + k + "</th><td>" + ((feat.properties[k] === null)?"":feat.properties[k]) + "</td></tr>"
                     })
                 } else {
                     $.each(feat.properties,function(k,v){
                         if (["ogc_fid","md5_rowhash"].indexOf(k.toLowerCase()) >= 0 ) {
                             return
                         }
-                        msg += "<tr><th>" + k + "</th><td>" + ((v === null)?"":v + "</td></tr>")
+                        msg += "<tr><th>" + k + "</th><td>" + ((v === null)?"":v) + "</td></tr>"
                     })
                 }
                 msg += "</table>"
-                var popup = L.popup(this._options).setLatLng(ev.latlng).setContent(msg)
-                vm._map.getLMap().openPopup(popup)
+                vm._popup.setContent(msg)
+                //highlight the feature
+                if (vm._layer._featureInfo.highlight) {
+                    if ( ["polygon","multipolygon"].indexOf(feat["geometry"]["type"].toLowerCase()) >= 0) {
+                        if (vm._polygon) {
+                            vm._polygon.setLatLngs(L.GeoJSON.coordsToLatLngs(feat["geometry"]["coordinates"],2))
+                        } else {
+                            vm._polygon = L.polygon(L.GeoJSON.coordsToLatLngs(feat["geometry"]["coordinates"],2),vm._layer._featureInfo.style || {})
+                            vm._polygon.addTo(vm._map.getLMap())
+                            vm._polygon.bindPopup(vm._popup)
+                        }
+                        vm._polygon.openPopup(ev.latlng)
+                    }
+                } else {
+                    vm._map.getLMap().openPopup(popup)
+                }
             },
             error: function (xhr,status,message) {
                 vm.warning = true
@@ -80,10 +104,10 @@ FeatureInfo.prototype.enable = function(enable) {
         if (!this._layer) {
             throw "Layer is null"
         }
-        console.log("Enable feature info interaction")
+        this._map.getMapElement().css("cursor","pointer")
         this._map.getLMap().on(this._eventType,this._showFeatureInfo)
     } else if (!enable && this._enabled) {
-        console.log("Disable feature info interaction")
+        this._map.getMapElement().css("cursor","")
         this._map.getLMap().off(this._eventType,this._showFeatureInfo)
     }
 }

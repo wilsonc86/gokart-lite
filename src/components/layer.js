@@ -72,7 +72,7 @@ Layer.getLayer = function(layer) {
 }
 //load layers from csw and merge with layers configured in environment file; and then add them to map
 Layer.loadLayers = function(map) {
-    env.cswApp = (env.cswApp || env.app).toLowerCase()
+    gokartEnv.cswApp = (gokartEnv.cswApp || gokartEnv.app).toLowerCase()
     var vm = this
     var req = new window.XMLHttpRequest()
     req.withCredentials = true
@@ -91,7 +91,7 @@ Layer.loadLayers = function(map) {
         })
         //merge the layers loaded from csw with layer cofigured in environment files and set the zIndex configured in environment file
         var zindex = 3
-        $.each(env.layers || [],function(index,l) {
+        $.each(gokartEnv.layers || [],function(index,l) {
             var layer = layers.find(function(o) {return o.id === l.id})
             if (layer) {
                 $.extend(layer,l)
@@ -157,7 +157,7 @@ Layer.loadLayers = function(map) {
       console.error(msg)
       alert(msg)
     }
-    req.open('GET', env.cswService + "?format=json&application__name=" + env.cswApp)
+    req.open('GET', gokartEnv.cswService + "?format=json&application__name=" + gokartEnv.cswApp)
     req.send()
 
 
@@ -258,14 +258,14 @@ WMSTileLayer.prototype.defaultOptions = {
 
 WMSTileLayer.prototype._create = function() {
     if (this._mapLayer) return
-    this._mapLayer = L.tileLayer.wms(env.wmsService,this._options)
+    this._mapLayer = L.tileLayer.wms(gokartEnv.wmsService,this._options)
 }
 
 
 //Tile layer
 var TileLayer = function(layer) {
     Layer.call(this,layer)
-    this._tileUrl = env.wmtsService + "?layer=" + this._id + "&style=" + this._options["style"] + "&tilematrixset=" + this._options["tilematrixset"] + "&Service=WMTS&Request=GetTile&Version=1.0.0&Format=" + this._options["format"] + "&TileMatrix=" + this._options["tilematrixset"] + ":{z}&TileCol={x}&TileRow={y}"
+    this._tileUrl = gokartEnv.wmtsService + "?layer=" + this._id + "&style=" + this._options["style"] + "&tilematrixset=" + this._options["tilematrixset"] + "&Service=WMTS&Request=GetTile&Version=1.0.0&Format=" + this._options["format"] + "&TileMatrix=" + this._options["tilematrixset"] + ":{z}&TileCol={x}&TileRow={y}"
 }
 
 TileLayer.prototype = Object.create(Layer.prototype)

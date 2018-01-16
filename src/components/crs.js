@@ -1,5 +1,4 @@
 import {
-  $,
   L
 } from 'src/vendor.js'
 

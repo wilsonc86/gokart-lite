@@ -14,6 +14,7 @@
     <link rel="icon" href="dist/static/images/favicon.svg" sizes="any" type="image/svg+xml" />
     <link rel="icon" href="dist/static/images/favicon-256.png" sizes="16x16 32x32 64x64 128x128 256x256" type="image/png" /> 
     <link rel="stylesheet" property="stylesheet" type="text/css" href="dist/static/css/style.css" />
+    <script src="https://static.dpaw.wa.gov.au/static/libs/jquery/3.2.1/jquery.min.js"></script>
   </head>
   <body style="margin:0px;">
     <!-- main global styles down here to load after all packaged styles -->
@@ -23,8 +24,15 @@
     <script src="dist/sss.js"></script>
     <script>
         $(window).on("resize", function () { 
+            if (gokart.map) {
+                gokart.map.setSize($(window).width(),$(window).height())
+            }
+        });
+        $(document).ready(function(){
+            console.log('ddd')
+            gokart.map = new gokart.Map("map")
             gokart.map.setSize($(window).width(),$(window).height())
-        }).trigger("resize");
+        })
     </script>
   </body>
 </html>

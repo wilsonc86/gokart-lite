@@ -4,9 +4,9 @@ function Utils() {
 }
 
 var styleVersion = null;
-function _checkVersion(profile,check) {
+function _checkVersion(app,profile,check) {
     $.ajax({
-        url: "/profile/sss/" + profile.distributionType,
+        url: gokartEnv.gokartService + "/profile/" + app + "/" + profile.distributionType,
         contentType:"application/json",
         success: function (response, stat, xhr) {
             if (profile.build.datetime !== response.build.datetime || 
@@ -18,9 +18,9 @@ function _checkVersion(profile,check) {
                 alert("Application was not built on the latest vendor library, please rebuild the application again.")
             } else if (!("envVersion" in response) && "envType" in response) {
                 alert("The '" + response.envType + "' enviroment file is missing in the server side. ")
-            } else if ("envType" in response && response.envType !== env.envType) {
-                alert("Local environment '" + env.envType + "' does not match the server configured enviroment '" + response.envType + "', please press <F5> to reload the system; if can't fix, please clean borwser's cache." )
-            } else if ("envVersion" in response && (response.envVersion || "").trim() !== (env.envVersion || "").trim() ) {
+            } else if ("envType" in response && response.envType !== gokartEnv.envType) {
+                alert("Local environment '" + gokartEnv.envType + "' does not match the server configured enviroment '" + response.envType + "', please press <F5> to reload the system; if can't fix, please clean borwser's cache." )
+            } else if ("envVersion" in response && (response.envVersion || "").trim() !== (gokartEnv.envVersion || "").trim() ) {
                 alert("The running environment is changed, please press <F5> to reload the system; if can't fix, please clean browser's cache.")
             } else if ("styleVersion" in response && (response.styleVersion || "").trim() !== styleVersion) {
                 alert("The style file is changed, please press <F5> to reload the system; if can't fix, please clean browser's cache.")
@@ -37,18 +37,19 @@ function _checkVersion(profile,check) {
     })
 }
 
-Utils.prototype.checkVersion = function(profile,check) {
+Utils.prototype.checkVersion = function(app,profile,check) {
     if (styleVersion === null) {
         $.ajax({
-            url: "/dist/static/css/style.css",
+            url: gokartEnv.gokartService + "/dist/static/css/style.css",
             contentType:"text/plain",
             success: function (response, stat, xhr) {
                 var styleVersion_re = /\/\*\s*version\s*:\s*[\"\']?\s*([a-zA-Z0-9\.\:\-][a-zA-Z0-9\.\:\-\ ]+[a-zA-Z0-9\.\:\-])\s*[\"\']?\s*\*\//
                 var m = styleVersion_re.exec(response)
                 styleVersion = m?m[1].trim():""
-                _checkVersion(profile,check)
+                _checkVersion(app,profile,check)
             },
             error: function (xhr,status,message) {
+                alert('ddddddddddddddddddddddddddddddddddddddddddddd')
                 alert(xhr.status + " : " + (xhr.responseText || message))
             },
             xhrFields: {
@@ -56,7 +57,7 @@ Utils.prototype.checkVersion = function(profile,check) {
             }
         })
     } else {
-        _checkVersion(profile,check)
+        _checkVersion(app,profile,check)
     }
 }
 
