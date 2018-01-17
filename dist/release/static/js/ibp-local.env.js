@@ -11,8 +11,8 @@ var gokartEnv = {
     wmsService:"https://kmi.dpaw.wa.gov.au/geoserver/wms",
     wfsService:"https://kmi.dpaw.wa.gov.au/geoserver/wfs",
 
-    app:"idp",
-    cswApp:"idp",
+    app:"ibp",
+    cswApp:"ibp",
 
     map: {
         crs:"EPSG:4326",
