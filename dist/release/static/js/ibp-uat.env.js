@@ -1,18 +1,18 @@
 //indicative burning program
 var gokartEnv = {
-    envType:"local",
+    envType:"uat",
     envVersion:"2018-01-11 11:23",
 
-    gokartService:"https://ssslite-local.dpaw.wa.gov.au",
+    gokartService:"https://ssslite-uat.dbca.wa.gov.au",
 
-    cswService:"https://oim.dpaw.wa.gov.au/catalogue/api/records/",
+    cswService:"https://oim.dbca.wa.gov.au/catalogue/api/records/",
 
-    wmtsService:"https://kmi.dpaw.wa.gov.au/geoserver/gwc/service/wmts",
-    wmsService:"https://kmi.dpaw.wa.gov.au/geoserver/wms",
-    wfsService:"https://kmi.dpaw.wa.gov.au/geoserver/wfs",
+    wmtsService:"https://kmi.dbca.wa.gov.au/geoserver/gwc/service/wmts",
+    wmsService:"https://kmi.dbca.wa.gov.au/geoserver/wms",
+    wfsService:"https://kmi.dbca.wa.gov.au/geoserver/wfs",
 
-    app:"idp",
-    cswApp:"idp",
+    app:"ibp",
+    cswApp:"ibp",
 
     map: {
         crs:"EPSG:4326",

@@ -35,9 +35,8 @@
       "browserify-shim"
     ]
   },
-  "browserify-shim":{
-      "jquery":"global:$"
-
+  "browserify-shim": {
+    "jquery": "global:$"
   },
   "dependencies": {
     "leaflet": "~1.2.0"
