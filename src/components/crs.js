@@ -7,7 +7,6 @@ var _CRS_MAP = {
     "EPSG:3857":L.CRS.EPSG3857,
     "EPSG:3395":L.CRS.EPSG3395
 }
-
 var getCRS = function(crs){
     crs = (crs || "EPSG:4326").toUpperCase()
     if (crs in _CRS_MAP) {

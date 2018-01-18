@@ -14,6 +14,7 @@ var Map = function (mapid) {
     if ("crs" in this._options && typeof(this._options["crs"]) === "string") {
         this._options["crs"] = getCRS(this._options["crs"])
     }
+
     if ("maxBounds" in this._options && Array.isArray(this._options["maxBounds"])) {
         this._options["maxBounds"] = L.latLngBounds(L.latLng(this._options["maxBounds"][0],L.latLng(this._options["maxBounds"][1])))
     }

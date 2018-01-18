@@ -17,8 +17,8 @@ var gokartEnv = {
     map: {
         crs:"EPSG:4326",
         center:[-24.862060546874,116.60888671875 ],
-        zoom:4,
-        minZoom:4,
+        zoom:2,
+        minZoom:2,
         maxZoom:18,
         maxBounds:[[-45,108],[-10,155]],
     

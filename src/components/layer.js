@@ -280,6 +280,7 @@ TileLayer.prototype.defaultOptions = {
     transparent:true,
     version:"1.1.1",
     opacity:1,
+    tileSize:1024
 }
 
 TileLayer.prototype._create = function() {
