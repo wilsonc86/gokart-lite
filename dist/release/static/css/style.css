@@ -1,1 +1,7 @@
-/* version: 2018-01-16 11:47 */
+/* version: 2018-01-18 17:47 */
+#gokart_map  #feature_info table tbody th {
+    white-space: nowrap;
+}
+#gokart_map  #feature_info table tfoot td {
+    text-align:center;
+}

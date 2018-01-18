@@ -64,6 +64,7 @@ var gokartEnv = {
         },
         featureInfo:{
             highlight:true,
+            primaryKey:"burnid",
             style:{
                 stroke:true,
                 color:"#ff0000",
