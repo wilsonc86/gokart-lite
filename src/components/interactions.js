@@ -85,14 +85,16 @@ FeatureInfo.prototype.enable = function(enable) {
                     msg += "</table></div>"
 
                     vm._popupHtmlElement = $($.parseHTML(msg))
-                    vm._popupHtmlElement.find("#featureinfo_navigator_previous").on("click",function(){
+                    vm._popupHtmlElement.find("#featureinfo_navigator_previous").on("click",function(ev){
+                        ev.stopPropagation()
                         if (vm._featIndex <= 0) {
                             vm.selectFeature(vm._featsSize - 1)
                         } else {
                             vm.selectFeature(vm._featIndex - 1)
                         }
                     })
-                    vm._popupHtmlElement.find("#featureinfo_navigator_next").on("click",function(){
+                    vm._popupHtmlElement.find("#featureinfo_navigator_next").on("click",function(ev){
+                        ev.stopPropagation()
                         if (vm._featIndex >= vm._featsSize) {
                             vm.selectFeature(0)
                         } else {
@@ -182,7 +184,8 @@ FeatureInfo.prototype.setLayer = function(layer) {
         if (this._layer._featureInfo.buttons) {
             options["buttons"] =[]
             if (this._layer._featureInfo.buttons.indexOf("clear") >= 0) {
-                options["buttons"].push([gokartEnv.gokartService + "/dist/static/images/clear.svg",function(){
+                options["buttons"].push([gokartEnv.gokartService + "/dist/static/images/clear.svg",function(ev){
+                    ev.stopPropagation()
                     vm.clear()
                 }])
             }
