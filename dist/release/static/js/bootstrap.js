@@ -1,6 +1,6 @@
-//distType can be local, dev, uat and prod.default is prod
-var loadGokartLite = function(options) {
-    options.disType = options.distType || "prod"
+//envType can be local, dev, uat and prod.default is prod
+var loadGokart = function(options) {
+    options.envType = options.envType || "prod"
     var gokartDomain = null;
     var scripts = [];
     var cssFiles = [];
@@ -23,7 +23,7 @@ var loadGokartLite = function(options) {
     }
 
     if (!gokartDomain) {
-        throw "/dist/static/js/embeded.js is not loaded"
+        throw "/dist/static/js/bootstrap.js is not loaded"
     }
 
     var getStaticUrl = function(url) {
@@ -100,18 +100,17 @@ var loadGokartLite = function(options) {
         scripts.push(getStaticUrl("/static/libs/jquery/3.2.1/jquery.min.js"))
     }
 
-    scripts.push(getStaticUrl("/static/libs/jquery/3.2.1/jquery.min.js"),gokartDomain + "/dist/static/js/" + options.app + "-" + (options.envType || options.distType) + ".env.js" ,gokartDomain + "/dist/vendor.js",gokartDomain + "/dist/sss.js")
+    scripts.push(getStaticUrl("/static/libs/jquery/3.2.1/jquery.min.js"),gokartDomain + "/dist/static/js/" + options.app + "-" + options.envType + ".env.js" ,gokartDomain + "/dist/vendor.js",gokartDomain + "/dist/sss.js")
 
     importCssFile(0)
 
 }
 if (gokartOptions) {
     if (document.readyState === "complete") {
-        console.log("==dddd")
-        loadGokartLite(gokartOptions)
+        loadGokart(gokartOptions)
     } else {
         window.addEventListener("load",function(){
-            loadGokartLite(gokartOptions)
+            loadGokart(gokartOptions)
         })
     }
 }

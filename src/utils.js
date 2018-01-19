@@ -7,6 +7,7 @@ var styleVersion = null;
 function _checkVersion(app,profile,check) {
     $.ajax({
         url: gokartEnv.gokartService + "/profile/" + app + "/" + profile.distributionType,
+        method:"GET",
         contentType:"application/json",
         success: function (response, stat, xhr) {
             if (profile.build.datetime !== response.build.datetime || 
@@ -22,7 +23,7 @@ function _checkVersion(app,profile,check) {
                 alert("Local environment '" + gokartEnv.envType + "' does not match the server configured enviroment '" + response.envType + "', please press <F5> to reload the system; if can't fix, please clean borwser's cache." )
             } else if ("envVersion" in response && (response.envVersion || "").trim() !== (gokartEnv.envVersion || "").trim() ) {
                 alert("The running environment is changed, please press <F5> to reload the system; if can't fix, please clean browser's cache.")
-            } else if ("styleVersion" in response && (response.styleVersion || "").trim() !== styleVersion) {
+            } else if (styleVersion && "styleVersion" in response && (response.styleVersion || "").trim() !== styleVersion) {
                 alert("The style file is changed, please press <F5> to reload the system; if can't fix, please clean browser's cache.")
             } else if (check) {
                 alert("You have the latest version.")
@@ -38,24 +39,29 @@ function _checkVersion(app,profile,check) {
 }
 
 Utils.prototype.checkVersion = function(app,profile,check) {
-    if (styleVersion === null) {
-        $.ajax({
-            url: gokartEnv.gokartService + "/dist/static/css/style.css",
-            contentType:"text/plain",
-            success: function (response, stat, xhr) {
-                var styleVersion_re = /\/\*\s*version\s*:\s*[\"\']?\s*([a-zA-Z0-9\.\:\-][a-zA-Z0-9\.\:\-\ ]+[a-zA-Z0-9\.\:\-])\s*[\"\']?\s*\*\//
-                var m = styleVersion_re.exec(response)
-                styleVersion = m?m[1].trim():""
-                _checkVersion(app,profile,check)
-            },
-            error: function (xhr,status,message) {
-                alert(xhr.status + " : " + (xhr.responseText || message))
-            },
-            xhrFields: {
-                withCredentials: true
-            }
-        })
-    } else {
+    try {
+        if (styleVersion === null && new URL(gokartEnv.gokartService).host === document.location.host) {
+            $.ajax({
+                url: gokartEnv.gokartService + "/dist/static/css/style.css",
+                method:"GET",
+                contentType:"text/plain",
+                success: function (response, stat, xhr) {
+                    var styleVersion_re = /\/\*\s*version\s*:\s*[\"\']?\s*([a-zA-Z0-9\.\:\-][a-zA-Z0-9\.\:\-\ ]+[a-zA-Z0-9\.\:\-])\s*[\"\']?\s*\*\//
+                    var m = styleVersion_re.exec(response)
+                    styleVersion = m?m[1].trim():""
+                    _checkVersion(app,profile,check)
+                },
+                error: function (xhr,status,message) {
+                    alert(xhr.status + " : " + (xhr.responseText || message))
+                },
+                xhrFields: {
+                    withCredentials: true
+                }
+            })
+        } else {
+            _checkVersion(app,profile,check)
+        }
+    } catch(ex) {
         _checkVersion(app,profile,check)
     }
 }
