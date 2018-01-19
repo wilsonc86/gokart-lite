@@ -55,7 +55,7 @@ var gokartEnv = {
         options:{
         }
     },{
-        id:"cddp:annual_indicative_burn_program",
+        id:"dpaw:latest_indicative_burn_program",
         type:"WMTS",
         layerType:"toplayer",
         geometryType:"polygon",
