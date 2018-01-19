@@ -24,7 +24,7 @@ var FeatureInfo = function(map,eventType) {
     this._feats = []
     this._featsSize = 0
     this._featIndex = -1
-    this._popup = L.popup(this._options)
+    this._popup = null
     this._popupHtmlElement = null;
 
     this._options = $.extend(FeatureInfo.defaultOptions,(gokartEnv.featureInfoPopup && gokartEnv.featureInfoPopup.options)?gokartEnv.featureInfoPopup.options:{})
@@ -80,11 +80,25 @@ FeatureInfo.prototype.enable = function(enable) {
                     }
                     msg += "</tbody>"
                     msg += "<tfoot><tr id='featureinfo_feature_navigator'><td colspan='2'>"
-                    msg += "<A id='feautreinfo_previous_feature'>Previous</A> <span id='featureinfo_current_index'></span>/<span id='featureinfo_size'></span> <A id='featureinfo_next_feature'>Next</A>"
+                    msg += "<img id='featureinfo_navigator_previous' class='featureinfo_navigator_button' src='" + gokartEnv.gokartService + "/dist/static/images/previous.svg'> <span id='featureinfo_current_index'></span>/<span id='featureinfo_size'></span> <img id='featureinfo_navigator_next' class='featureinfo_navigator_button' src='" + gokartEnv.gokartService + "/dist/static/images/next.svg'>"
                     msg += "</td></tr></tfoot>"
                     msg += "</table></div>"
 
                     vm._popupHtmlElement = $($.parseHTML(msg))
+                    vm._popupHtmlElement.find("#featureinfo_navigator_previous").on("click",function(){
+                        if (vm._featIndex <= 0) {
+                            vm.selectFeature(vm._featsSize - 1)
+                        } else {
+                            vm.selectFeature(vm._featIndex - 1)
+                        }
+                    })
+                    vm._popupHtmlElement.find("#featureinfo_navigator_next").on("click",function(){
+                        if (vm._featIndex >= vm._featsSize) {
+                            vm.selectFeature(0)
+                        } else {
+                            vm.selectFeature(vm._featIndex + 1)
+                        }
+                    })
                     vm._popup.setContent(vm._popupHtmlElement.get(0))
                 }
                 $.each(response.features,function(index,feat) {
@@ -137,26 +151,69 @@ FeatureInfo.prototype.enable = function(enable) {
         }
         this._map.getMapElement().css("cursor","pointer")
         this._map.getLMap().on(this._eventType,this._showFeatureInfo)
+        this._enabled = true
     } else if (!enable && this._enabled) {
         this._map.getMapElement().css("cursor","")
         this._map.getLMap().off(this._eventType,this._showFeatureInfo)
+        this._enabled = false
     }
 }
 //set the layer to fetch info
 FeatureInfo.prototype.setLayer = function(layer) {
     if (layer) {
         //try to enable this interaction for the  layer
+        if (this._layer === layer) {
+            //same layer
+            this.enable(true)
+            return
+        }
+        //clear featureinfo for the previous layer
+        if (this._layer) {
+            this.clear()
+        }
         this._layer = layer
+        if (this._popupHtmlElement) {
+            this._popupHtmlElement.find("#featureinfo_navigator_previous").off("click")
+            this._popupHtmlElement.find("#featureinfo_navigator_next").off("click")
+            this._popupHtmlElement = null;
+        }
+        var options = $.extend({},this._options)
+        var vm = this
+        if (this._layer._featureInfo.buttons) {
+            options["buttons"] =[]
+            if (this._layer._featureInfo.buttons.indexOf("clear") >= 0) {
+                options["buttons"].push([gokartEnv.gokartService + "/dist/static/images/clear.svg",function(){
+                    vm.clear()
+                }])
+            }
+        }
+        this._popup = L.popup(options)
         this.enable(true)
     } else {
-        //set the layer to null, and disable this interaction
-        this._layer = null
+        // disable this interaction, but keep the last layer.
         this.enable(false)
     }
 }
-
+//clear the feature info,retrieved from the backend.
+FeatureInfo.prototype.clear = function() {
+    //clear the feature info,retrieved from the backend.
+    if (this._layer._featureInfo.highlight) {
+        if (this._featIndex >= 0) {
+            this._feats[this._featIndex]["geometry"].closePopup()
+            this._feats[this._featIndex]["geometry"].unbindPopup()
+            this._feats[this._featIndex]["geometry"].remove()
+        }
+    } else {
+        if (this._popup.isOpen()) {
+            this._popup.remove()
+        }
+    }
+    this._featIndex = -1
+    this._featsSize = 0
+}
+//select the feature for popup dialog
 FeatureInfo.prototype.selectFeature = function(index,ev) {
-    if (index < 0 || index >= this._feats.length) {
+    if (index < 0 || index >= this._featsSize) {
         index = 0
     }
     if (!this._popupHtmlElement) return
@@ -190,7 +247,7 @@ FeatureInfo.prototype.selectFeature = function(index,ev) {
             }
             this._feats[index]["geometry"].bindPopup(this._popup)
             this._feats[index]["geometry"].addTo(this._map.getLMap())
-            this._feats[index]["geometry"].openPopup(this._popup.getLatLng())
+            this._feats[index]["geometry"].openPopup(ev?ev.latlng:this._popup.getLatLng())
         } else {
             if (ev) {
                 this._popup.setLatLng(ev.latlng)

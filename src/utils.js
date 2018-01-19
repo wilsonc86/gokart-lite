@@ -49,7 +49,6 @@ Utils.prototype.checkVersion = function(app,profile,check) {
                 _checkVersion(app,profile,check)
             },
             error: function (xhr,status,message) {
-                alert('ddddddddddddddddddddddddddddddddddddddddddddd')
                 alert(xhr.status + " : " + (xhr.responseText || message))
             },
             xhrFields: {

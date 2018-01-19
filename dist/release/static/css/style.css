@@ -5,3 +5,31 @@
 #gokart_map  #feature_info table tfoot td {
     text-align:center;
 }
+#gokart_map  #feature_info .featureinfo_navigator_button {
+    width:16px;
+    height:16px;
+    cursor:pointer;
+}
+#gokart_map  #feature_info #featureinfo_feature_navigator {
+    font-size:18px; 
+    font-weight: bold;
+    background: transparent;
+    padding-left:10px;
+    padding-right:10px;
+
+}
+.leaflet-container .leaflet-popup-custom-button {
+    width: 18px;
+    height: 14px;
+    cursor:pointer;
+}
+.leaflet-container .leaflet-popup-custom-buttons {
+    position: absolute;
+    top: 0;
+    right: 20px;
+    padding: 4px 4px 0 0;
+    border: none;
+    width: 18px;
+    height: 14px;
+    text-decoration: none;
+}
