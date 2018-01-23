@@ -1,7 +1,8 @@
 //indicative burning program
 var gokartEnv = {
     envType:"prod",
-    envVersion:"2018-01-11 11:23",
+    envVersion:"2018-01-23 11:23",
+    title:"Indicative Burning Program",
 
     gokartService:"https://ssslite.dpaw.wa.gov.au",
 
@@ -16,14 +17,16 @@ var gokartEnv = {
 
     map: {
         crs:"EPSG:4326",
-        center:[-24.862060546874,116.60888671875 ],
-        zoom:2,
+        center:[-31.95296,115.86067 ],
         minZoom:2,
         maxZoom:18,
-        maxBounds:[[-45,108],[-10,155]],
+        maxBounds:[[-45,108.6],[-10,155]],
+        bounds:[[-36,112.6],[-13,129.1]],
     
         zoomControl:true,
-        attributionControl:true,
+        attributionControl:false,
+        scaleControl:false,
+        fullscreenControl:true,
     
         zoomSnap:1,
         zoomDelta:1,
@@ -46,7 +49,7 @@ var gokartEnv = {
     //overlayer are layers between base layer and top layer
     //  all overlayers loaded from csw but not configured in environment file have zindex 2
     //  all overlayers cofigured in environment but without configured a correct zindex will receive a zindex from 3 to 100, based on configure order.
-    //  all overlayers configure in enviromment with a valid zindex between 100 to 1000, will receive the configured index
+    //  all overlayers configure in enviromment with a valid zindex between 100 to 1000, will receive the configured zindex
     //toplayer are layers on the top, always has zindex 1000, only one top layer can be shown on map, user can click on the map to get the detail information of the related feature
     layers:[{
         id:"cddp:state_map_base",
@@ -64,6 +67,7 @@ var gokartEnv = {
         },
         featureInfo:{
             highlight:true,
+            buttons:["clear"],
             style:{
                 stroke:true,
                 color:"#ff0000",
@@ -78,6 +82,10 @@ var gokartEnv = {
     }],
     //configuration for feature info popup
     featureInfoPopup:{
+        options:{
+        }
+    },
+    fullscreenControl: {
         options:{
         }
     }
