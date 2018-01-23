@@ -18,6 +18,12 @@
     padding-right:10px;
 
 }
+#gokart_map  #fullscreen_control {
+    width:24px;
+    height:24px;
+    cursor:pointer;
+}
+
 .leaflet-container .leaflet-popup-custom-button {
     width: 18px;
     height: 14px;

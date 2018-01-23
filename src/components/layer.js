@@ -28,11 +28,6 @@ var Layer = function(layer) {
         }
     })
  
-    if (this._base) {
-        this._options["zIndex"] = 1
-    } else if(this._options["zIndex"] === null || this._options["zIndex"] === undefined) {
-        this._options["zIndex"] = 10
-    }
     this._mapLayer = null
     this._map = null
 
@@ -90,7 +85,7 @@ Layer.loadLayers = function(map) {
           layers.push(l)
         })
         //merge the layers loaded from csw with layer cofigured in environment files and set the zIndex configured in environment file
-        var zindex = 3
+        var zIndex = 3
         $.each(gokartEnv.layers || [],function(index,l) {
             var layer = layers.find(function(o) {return o.id === l.id})
             if (layer) {

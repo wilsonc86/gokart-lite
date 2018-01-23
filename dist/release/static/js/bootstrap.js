@@ -100,7 +100,7 @@ var loadGokart = function(options) {
         scripts.push(getStaticUrl("/static/libs/jquery/3.2.1/jquery.min.js"))
     }
 
-    scripts.push(getStaticUrl("/static/libs/jquery/3.2.1/jquery.min.js"),gokartDomain + "/dist/static/js/" + options.app + "-" + options.envType + ".env.js" ,gokartDomain + "/dist/vendor.js",gokartDomain + "/dist/sss.js")
+    scripts.push(gokartDomain + "/dist/static/js/" + options.app + "-" + options.envType + ".env.js" ,gokartDomain + "/dist/vendor.js",gokartDomain + "/dist/sss.js")
 
     importCssFile(0)
 

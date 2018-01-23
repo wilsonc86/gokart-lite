@@ -39,6 +39,10 @@ FeatureInfo.prototype.enable = function(enable) {
     this._showFeatureInfo = this._showFeatureInfo || function(ev) {
         var url = null
         var buffer = 10
+        if (!vm._map.inMaxBounds(ev.latlng)) {
+            //not in the map bounds
+            return
+        }
         if (vm._layer._geometryType === "polygon") {
             if (!vm._layer._geometryColumn) {
                 buffer = 1

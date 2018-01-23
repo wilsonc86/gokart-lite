@@ -15,28 +15,96 @@ var Map = function (mapid) {
         this._options["crs"] = getCRS(this._options["crs"])
     }
 
-    if ("maxBounds" in this._options && Array.isArray(this._options["maxBounds"])) {
-        this._options["maxBounds"] = L.latLngBounds(L.latLng(this._options["maxBounds"][0],L.latLng(this._options["maxBounds"][1])))
-    }
+    var vm = this
+    //convert bounds array to latLngBounds
+    $.each(["bounds","maxBounds"],function(index,key) {
+        if (key in vm._options && Array.isArray(vm._options[key])) {
+            vm._options[key] = L.latLngBounds(
+                L.latLng(vm._options[key][0][0],vm._options[key][0][1]),
+                L.latLng(vm._options[key][1][0],vm._options[key][1][1])
+            )
+        }
+    })
     this._map = null
+    
+    this._embeded = new URL(gokartEnv.gokartService).host !== document.location.host
     this._create()
 }
 //set map option
 //parameters:key,value
-Map.prototype.setOption = function(key,value) {
+Map.prototype.setOption = function(key,value,enforce) {
     if (key === "crs" && typeof(value) === "string") {
         value = getCRS(value)
     } else if (key === "maxBounds" && Array.isArray(value)) {
         value = L.latLngBounds(L.latLng(value[0],L.latLng(value[1])))
-    } else if (self._options[key] === value) {
+    } else if(key === "fullscreenControl") {
+        if (!this._embeded) {
+            //fullscreen control is not supported in non embeded environment
+            return
+        }
+    } else if (!enforce && this._options[key] === value) {
         return
     }
 
-    self._options[key] = value
+    this._options[key] = value
     if (!this._map) return
 
     if (key === "center") {
         this._map.setView(value)
+    } else if(key === "zoom") {
+        this._map.setZoom(value)
+    } else if(key === "zoomControl") {
+        if (value) {
+            if (!this.zoomControl) {
+                this.zoomControl = L.control.zoom($.extend({position:"topleft"},(gokartEnv.zoomControl && gokartEnv.zoomControl.options)?gokartEnv.zoomControl.options:{}))
+            }
+            if (!this.zoomControl._map) {
+                this.zoomControl.addTo(this._map)
+            }
+        } else {
+            if (this.zoomControl && this.zoomControl._map) {
+                this.zoomControl.remove()
+            }
+        }
+    } else if(key === "attributionControl") {
+        if (value) {
+            if (!this.attributionControl) {
+                this.attributionControl = L.control.attribution($.extend({position:"bottomright"},(gokartEnv.attributionControl && gokartEnv.attributionControl.options)?gokartEnv.attributionControl.options:{}))
+            }
+            if (!this.attributionControl._map) {
+                this.attributionControl.addTo(this._map)
+            }
+        } else {
+            if (this.attributionControl && this.attributionControl._map) {
+                this.attributionControl.remove()
+            }
+        }
+    } else if(key === "scaleControl") {
+        if (value) {
+            if (!this.scaleControl) {
+                this.scaleControl = L.control.scale($.extend({position:"bottomleft"},(gokartEnv.scaleControl && gokartEnv.scaleControl.options)?gokartEnv.scaleControl.options:{}))
+            }
+            if (!this.scaleControl._map) {
+                this.scaleControl.addTo(this._map)
+            }
+        } else {
+            if (this.scaleControl && this.scaleControl._map) {
+                this.scaleControl.remove()
+            }
+        }
+    } else if(key === "fullscreenControl") {
+        if (value) {
+            if (!this.fullscreenControl) {
+                this.fullscreenControl = L.control.fullscreen()
+            }
+            if (!this.fullscreenControl._map) {
+                this.fullscreenControl.addTo(this._map)
+            }
+        } else {
+            if (this.fullscreenControl && this.fullscreenControl._map) {
+                this.fullscreenControl.remove()
+            }
+        }
     }
 }
 //Return the leaflet object
@@ -48,20 +116,17 @@ Map.prototype.getMapElement = function() {
     return this._mapElement
 }
 
-//Return the map element
-Map.prototype.setSize = function(width,height) {
-    width = width || this._mapElement.width()
-    height = height || this._mapElement.height()
-    if (width === this._mapElement.width() && height === this._mapElement.height()) {
-        return
+//return ture if in max bounds;othewise return false
+Map.prototype.inMaxBounds = function(latlng) {
+    if (this._options["maxBounds"]) {
+        return this._options["maxBounds"].contains(latlng)
+    } else {
+        return true
     }
-    var center = this._map.getCenter()
-    var zoom = this._map.getZoom()
-    this._mapElement.width(width)
-    this._mapElement.height(height)
-    this._map.invalidateSize(); 
-    this._map.setView(center,zoom)
-    
+}
+
+Map.prototype.setSize = function(width,height) {
+    this._map.setSize(width,height)
 }
 
 Map.prototype._create = function() {
@@ -70,7 +135,16 @@ Map.prototype._create = function() {
         return
     }
     //create leaflet map
-    this._map = L.map(this._mapid,this._options)
+    this._map = L.map(this._mapid,$.extend({},this._options,{zoomControl:false,attributionControl:false,scaleControl:false,fullscreenControl:false}))
+
+    if (this._options["bounds"]) {
+        this._map.fitBounds(this._options["bounds"])
+    }
+
+    var vm = this
+    $.each(["zoomControl","attributionControl","scaleControl","fullscreenControl"],function(index,key) {
+        vm.setOption(key,vm._options[key] || false,true)
+    })
 
     this.featureInfo = new FeatureInfo(this)
     //load and add layers
