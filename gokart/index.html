@@ -18,7 +18,7 @@
   </head>
   <body style="margin:0px;">
     <!-- main global styles down here to load after all packaged styles -->
-    <div id="gokart_map" style="width:100%;height:100%"></div>
+    <div id="gokart_map" ></div>
     <script src="dist/static/js/{{ app }}-{{ envType }}.env.js"></script>
     <script src="dist/vendor.js"></script>
     <script src="dist/sss.js"></script>
@@ -29,8 +29,12 @@
             }
         });
         $(document).ready(function(){
+            $("#gokart_map").width($(window).width())
+            $("#gokart_map").height($(window).height())
             gokart.map = new gokart.Map("gokart_map")
-            gokart.map.setSize($(window).width(),$(window).height())
+            if (gokartEnv.title) {
+                document.title = gokartEnv.title
+            }
         })
     </script>
   </body>
