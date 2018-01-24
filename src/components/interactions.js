@@ -187,7 +187,7 @@ FeatureInfo.prototype.setLayer = function(layer) {
         var vm = this
         if (this._layer._featureInfo.buttons) {
             options["buttons"] =[]
-            if (this._layer._featureInfo.buttons.indexOf("clear") >= 0) {
+            if (this._layer._featureInfo.buttons.indexOf("clear") >= 0 && this._layer._featureInfo["cache"]) {
                 options["buttons"].push([gokartEnv.gokartService + "/dist/static/images/clear.svg",function(ev){
                     ev.stopPropagation()
                     vm.clear()
@@ -236,7 +236,7 @@ FeatureInfo.prototype.selectFeature = function(index,ev) {
     }
     if (index === this._featIndex) {
         //choose the same feature
-        if (this._layer._featureInfo.highlight) {
+        if (this._layer._featureInfo.highlight && this._layer._featureInfo && this._layer._featureInfo["cache"]) {
             this._feats[index]["geometry"].openPopup((ev)?ev.latlng:undefined)
         } else {
             if (ev) {
@@ -249,12 +249,23 @@ FeatureInfo.prototype.selectFeature = function(index,ev) {
     } else {
         if (this._layer._featureInfo.highlight) {
             if (this._featIndex >= 0) {
-                this._feats[this._featIndex]["geometry"].unbindPopup()
+                if (this._layer._featureInfo && this._layer._featureInfo["cache"]) {
+                    this._feats[this._featIndex]["geometry"].unbindPopup()
+                }
                 this._feats[this._featIndex]["geometry"].remove()
             }
-            this._feats[index]["geometry"].bindPopup(this._popup)
             this._feats[index]["geometry"].addTo(this._map.getLMap())
-            this._feats[index]["geometry"].openPopup(ev?ev.latlng:this._popup.getLatLng())
+            if (this._layer._featureInfo && this._layer._featureInfo["cache"]) {
+                this._feats[index]["geometry"].bindPopup(this._popup)
+                this._feats[index]["geometry"].openPopup(ev?ev.latlng:this._popup.getLatLng())
+            } else {
+                if (ev) {
+                    this._popup.setLatLng(ev.latlng)
+                }
+                if (!this._popup.isOpen()) {
+                    this._popup.openOn(this._map.getLMap())
+                }
+            }
         } else {
             if (ev) {
                 this._popup.setLatLng(ev.latlng)
