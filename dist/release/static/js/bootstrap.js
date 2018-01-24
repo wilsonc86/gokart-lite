@@ -83,7 +83,7 @@ var loadGokart = function(options) {
                     //set map element's size
                     $(mapElement).width($(containerElement).width())
                     $(mapElement).height($(containerElement).height())
-                    gokart.map = new gokart.Map(mapElementId)
+                    gokart.initialize(mapElementId)
                 }
 
             }

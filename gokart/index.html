@@ -31,7 +31,7 @@
         $(document).ready(function(){
             $("#gokart_map").width($(window).width())
             $("#gokart_map").height($(window).height())
-            gokart.map = new gokart.Map("gokart_map")
+            gokart.initialize("gokart_map")
             if (gokartEnv.title) {
                 document.title = gokartEnv.title
             }

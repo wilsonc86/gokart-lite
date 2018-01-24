@@ -58,7 +58,37 @@ var gokartEnv = {
         options:{
         }
     },{
+        id:"public:mapbox-outdoors",
+        disable4AuthedUser:true,
+        serviceType:"WMTS",
+        layerType:"baselayer",
+        options:{
+        }
+    },{
         id:"dpaw:latest_indicative_burn_program",
+        type:"WMTS",
+        layerType:"toplayer",
+        geometryType:"polygon",
+        geometryColumn:" wkb_geometry",
+        options:{
+        },
+        featureInfo:{
+            highlight:true,
+            buttons:["clear"],
+            style:{
+                stroke:true,
+                color:"#ff0000",
+                weight:3,
+                opacity:1,
+                fill:true,
+                fillColor:"ff0000",
+                fillOpacity:0.3
+            },
+            properties:["burnid","region","district","location","priority","purpose_1","program","area_ha","perim_km"]
+        }
+    },{
+        id:"public:latest_indicative_burn_program2",
+        disable4AuthedUser:true,
         type:"WMTS",
         layerType:"toplayer",
         geometryType:"polygon",

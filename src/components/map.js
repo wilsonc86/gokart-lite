@@ -7,7 +7,8 @@ import {Layer} from './layer.js'
 import {getCRS} from './crs.js'
 import {FeatureInfo} from './interactions.js'
 
-var Map = function (mapid) {
+var Map = function (mapid,user) {
+    this._user = user || {authenticated:false}
     this._mapid = mapid
     this._mapElement = $("#" + mapid)
     this._options = gokartEnv["map"] || {}
@@ -127,6 +128,10 @@ Map.prototype.inMaxBounds = function(latlng) {
 
 Map.prototype.setSize = function(width,height) {
     this._map.setSize(width,height)
+}
+
+Map.prototype.isAuthenticated = function() {
+    return this._user["authenticated"]
 }
 
 Map.prototype._create = function() {

@@ -2,7 +2,7 @@
 import 'leaflet/dist/leaflet.css'
 
 // OpenLayers 3 map widget, including our extensions
-import L from 'src/leaflet-extension.js'
+import L from './leaflet-extension.js'
 import $ from 'jquery'
 
 import utils from './utils.js'

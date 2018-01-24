@@ -69,23 +69,10 @@ Layer.getLayer = function(layer) {
 Layer.loadLayers = function(map) {
     gokartEnv.cswApp = (gokartEnv.cswApp || gokartEnv.app).toLowerCase()
     var vm = this
-    var req = new window.XMLHttpRequest()
-    req.withCredentials = true
-    req.onload = function () {
-        var layers = []
-        JSON.parse(this.responseText).forEach(function (l) {
-          // add the base flag for layers tagged 'basemap'
-          if (l.tags.some(function (t) {return t.name === 'basemap'})) {
-              l.layerType = "baselayer"
-          } else {
-              l.layerType = "overlayer"
-          }
-          l.serviceType = "WMTS"
-  
-          layers.push(l)
-        })
+    var processLayers = function(layers) {
         //merge the layers loaded from csw with layer cofigured in environment files and set the zIndex configured in environment file
         var zIndex = 3
+        console.log(gokartEnv.layers)
         $.each(gokartEnv.layers || [],function(index,l) {
             var layer = layers.find(function(o) {return o.id === l.id})
             if (layer) {
@@ -106,7 +93,7 @@ Layer.loadLayers = function(map) {
                 zIndex += 1
             }
         })
-
+        console.log(layers)
         //set other options
         $.each(layers,function(index,l) {
             if (l.layerType === "baselayer") {
@@ -128,9 +115,19 @@ Layer.loadLayers = function(map) {
                 }
             }
         })
-
+        
         //add layers
         $.each(layers,function(index,l){
+            if (l.id.startsWith('public:')) {
+                //public layer
+                if (map.isAuthenticated() && l.disable4AuthedUser) {
+                    //disabled for auth user
+                    return
+                }
+            } else if(!map.isAuthenticated()) {
+                //non public layer is disabled for guest
+                return
+            }
             try {
                 l = Layer.getLayer(l)
             } catch(ex) {
@@ -147,15 +144,35 @@ Layer.loadLayers = function(map) {
 
         })
     }
-    req.onerror = function (ev) {
-      var msg ='Couldn\'t load layer catalogue!' +  (req.statusText? (" (" + req.statusText + ")") : '')
-      console.error(msg)
-      alert(msg)
+
+    if (map.isAuthenticated()) {
+        var req = new window.XMLHttpRequest()
+        req.withCredentials = true
+        req.onload = function () {
+            var layers = []
+            JSON.parse(this.responseText).forEach(function (l) {
+              // add the base flag for layers tagged 'basemap'
+              if (l.tags.some(function (t) {return t.name === 'basemap'})) {
+                  l.layerType = "baselayer"
+              } else {
+                  l.layerType = "overlayer"
+              }
+              l.serviceType = "WMTS"
+      
+              layers.push(l)
+            })
+            processLayers(layers)
+        }
+        req.onerror = function (ev) {
+            var msg ='Couldn\'t load layer catalogue!' +  (req.statusText? (" (" + req.statusText + ")") : '')
+            console.error(msg)
+            alert(msg)
+        }
+        req.open('GET', gokartEnv.cswService + "?format=json&application__name=" + gokartEnv.cswApp)
+        req.send()
+    } else {
+        processLayers([])
     }
-    req.open('GET', gokartEnv.cswService + "?format=json&application__name=" + gokartEnv.cswApp)
-    req.send()
-
-
 }
 
 
