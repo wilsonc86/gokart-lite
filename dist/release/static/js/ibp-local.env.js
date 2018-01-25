@@ -4,6 +4,8 @@ var gokartEnv = {
     envVersion:"2018-01-24 11:23",
     title:"Indicative Burning Program",
 
+    whoamiUrl:"https://oim.dpaw.wa.gov.au/api/whoami/",
+
     gokartService:"https://ssslite-local.dpaw.wa.gov.au",
 
     cswService:"https://oim.dpaw.wa.gov.au/catalogue/api/records/",
