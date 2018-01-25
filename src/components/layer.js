@@ -72,7 +72,6 @@ Layer.loadLayers = function(map) {
     var processLayers = function(layers) {
         //merge the layers loaded from csw with layer cofigured in environment files and set the zIndex configured in environment file
         var zIndex = 3
-        console.log(gokartEnv.layers)
         $.each(gokartEnv.layers || [],function(index,l) {
             var layer = layers.find(function(o) {return o.id === l.id})
             if (layer) {
@@ -93,7 +92,6 @@ Layer.loadLayers = function(map) {
                 zIndex += 1
             }
         })
-        console.log(layers)
         //set other options
         $.each(layers,function(index,l) {
             if (l.layerType === "baselayer") {
@@ -118,8 +116,10 @@ Layer.loadLayers = function(map) {
         
         //add layers
         $.each(layers,function(index,l){
+            l.requireAuth = true
             if (l.id.startsWith('public:')) {
                 //public layer
+                l.requireAuth = false
                 if (map.isAuthenticated() && l.disable4AuthedUser) {
                     //disabled for auth user
                     return
@@ -183,6 +183,10 @@ Layer.prototype._create = function() {
 //return layer id
 Layer.prototype.getId = function() {
     return this._id
+}
+//return true if it is  public layer;otherwise return false
+Layer.prototype.requireAuth = function() {
+    return this._requireAuth
 }
 //return true if it is a base layer
 Layer.prototype.isBaselayer = function() {
@@ -270,14 +274,14 @@ WMSTileLayer.prototype.defaultOptions = {
 
 WMSTileLayer.prototype._create = function() {
     if (this._mapLayer) return
-    this._mapLayer = L.tileLayer.wms(gokartEnv.wmsService,this._options)
+    this._mapLayer = L.tileLayer.wms((this.requireAuth()?gokartEnv.wmsService:gokartEnv.publicWmsService),this._options)
 }
 
 
 //Tile layer
 var TileLayer = function(layer) {
     Layer.call(this,layer)
-    this._tileUrl = gokartEnv.wmtsService + "?layer=" + this._id + "&style=" + this._options["style"] + "&tilematrixset=" + this._options["tilematrixset"] + "&Service=WMTS&Request=GetTile&Version=1.0.0&Format=" + this._options["format"] + "&TileMatrix=" + this._options["tilematrixset"] + ":{z}&TileCol={x}&TileRow={y}"
+    this._tileUrl = (this.requireAuth()?gokartEnv.wmtsService:gokartEnv.publicWmtsService) + "?layer=" + this._id + "&style=" + this._options["style"] + "&tilematrixset=" + this._options["tilematrixset"] + "&Service=WMTS&Request=GetTile&Version=1.0.0&Format=" + this._options["format"] + "&TileMatrix=" + this._options["tilematrixset"] + ":{z}&TileCol={x}&TileRow={y}"
 }
 
 TileLayer.prototype = Object.create(Layer.prototype)

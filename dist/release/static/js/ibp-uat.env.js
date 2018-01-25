@@ -1,7 +1,7 @@
 //indicative burning program
 var gokartEnv = {
     envType:"uat",
-    envVersion:"2018-01-23 11:23",
+    envVersion:"2018-01-24 11:23",
     title:"Indicative Burning Program",
 
     gokartService:"https://ssslite-uat.dpaw.wa.gov.au",
@@ -11,6 +11,8 @@ var gokartEnv = {
     wmtsService:"https://kmi.dpaw.wa.gov.au/geoserver/gwc/service/wmts",
     wmsService:"https://kmi.dpaw.wa.gov.au/geoserver/wms",
     wfsService:"https://kmi.dpaw.wa.gov.au/geoserver/wfs",
+
+    publicWmtsService:"https://kmi.dpaw.wa.gov.au/geoserver/public/gwc/service/wmts",
 
     app:"ibp",
     cswApp:"ibp",
@@ -52,13 +54,13 @@ var gokartEnv = {
     //  all overlayers configure in enviromment with a valid zindex between 100 to 1000, will receive the configured zindex
     //toplayer are layers on the top, always has zindex 1000, only one top layer can be shown on map, user can click on the map to get the detail information of the related feature
     layers:[{
-        id:"cddp:state_map_base",
+        id:"public:mapbox-outdoors",
         serviceType:"WMTS",
         layerType:"baselayer",
         options:{
         }
     },{
-        id:"dpaw:latest_indicative_burn_program",
+        id:"public:latest_indicative_burn_program2",
         type:"WMTS",
         layerType:"toplayer",
         geometryType:"polygon",

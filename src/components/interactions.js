@@ -47,14 +47,14 @@ FeatureInfo.prototype.enable = function(enable) {
             if (!vm._layer._geometryColumn) {
                 buffer = 1
             } else {
-               url = gokartEnv.wfsService + "/wfs?service=wfs&version=2.0&request=GetFeature&outputFormat=application%2Fjson&typeNames=" + vm._layer.getId() + "&cql_filter=CONTAINS(" + vm._layer._geometryColumn + ",POINT(" + ev.latlng.lat + " " + ev.latlng.lng + "))"
+               url = (vm._layer.requireAuth()?gokartEnv.wfsService:gokartEnv.publicWfsService) + "/wfs?service=wfs&version=2.0&request=GetFeature&outputFormat=application%2Fjson&typeNames=" + vm._layer.getId() + "&cql_filter=CONTAINS(" + vm._layer._geometryColumn + ",POINT(" + ev.latlng.lat + " " + ev.latlng.lng + "))"
             }
         }
         if (!url) {
             var topLeft = vm._map.getLMap().layerPointToLatLng([ev.layerPoint.x - 10,ev.layerPoint.y - 10])
             var bottomRight = vm._map.getLMap().layerPointToLatLng([ev.layerPoint.x + 10,ev.layerPoint.y + 10])
             var bbox = "&bbox=" + bottomRight[1] + "," + topLeft[0] + "," + topLeft[1] + "," + bottomRight[0]
-            url = gokartEnv.wfsService + "/wfs?service=wfs&version=2.0&request=GetFeature&outputFormat=application%2Fjson&typeNames=" + vm._layer.getId() + bbox
+            url = (vm._layer.requireAuth()?gokartEnv.wfsService:gokartEnv.publicWfsService) + "/wfs?service=wfs&version=2.0&request=GetFeature&outputFormat=application%2Fjson&typeNames=" + vm._layer.getId() + bbox
         }
 
         $.ajax({

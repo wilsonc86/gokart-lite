@@ -9,6 +9,13 @@ gokart.Layer = Layer;
 gokart.getCRS = getCRS;
 
 gokart.initialize = function(mapId) {
+    //initialize gokartEnv
+    $.each([["publicWmtsService","wmtsService"],["publicWmsService","wmsService"],["publicWfsService","wfsService"]],function(index,config){
+        if (!gokartEnv[config[0]]) {
+            gokartEnv[config[0]] = gokartEnv[config[1]]
+        }
+    })
+
     $.ajax({
         url: gokartEnv.gokartService + "/sso/auth",
         method:"GET",

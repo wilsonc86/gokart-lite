@@ -1,7 +1,7 @@
 //indicative burning program
 var gokartEnv = {
     envType:"local",
-    envVersion:"2018-01-23 11:23",
+    envVersion:"2018-01-24 11:23",
     title:"Indicative Burning Program",
 
     gokartService:"https://ssslite-local.dpaw.wa.gov.au",
@@ -11,6 +11,8 @@ var gokartEnv = {
     wmtsService:"https://kmi.dpaw.wa.gov.au/geoserver/gwc/service/wmts",
     wmsService:"https://kmi.dpaw.wa.gov.au/geoserver/wms",
     wfsService:"https://kmi.dpaw.wa.gov.au/geoserver/wfs",
+
+    publicWmtsService:"https://kmi.dpaw.wa.gov.au/geoserver/public/gwc/service/wmts",
 
     app:"ibp",
     cswApp:"ibp",
@@ -52,43 +54,13 @@ var gokartEnv = {
     //  all overlayers configure in enviromment with a valid zindex between 100 to 1000, will receive the configured zindex
     //toplayer are layers on the top, always has zindex 1000, only one top layer can be shown on map, user can click on the map to get the detail information of the related feature
     layers:[{
-        id:"cddp:state_map_base",
-        serviceType:"WMTS",
-        layerType:"baselayer",
-        options:{
-        }
-    },{
         id:"public:mapbox-outdoors",
-        disable4AuthedUser:true,
         serviceType:"WMTS",
         layerType:"baselayer",
         options:{
-        }
-    },{
-        id:"dpaw:latest_indicative_burn_program",
-        type:"WMTS",
-        layerType:"toplayer",
-        geometryType:"polygon",
-        geometryColumn:" wkb_geometry",
-        options:{
-        },
-        featureInfo:{
-            highlight:true,
-            buttons:["clear"],
-            style:{
-                stroke:true,
-                color:"#ff0000",
-                weight:3,
-                opacity:1,
-                fill:true,
-                fillColor:"ff0000",
-                fillOpacity:0.3
-            },
-            properties:["burnid","region","district","location","priority","purpose_1","program","area_ha","perim_km"]
         }
     },{
         id:"public:latest_indicative_burn_program2",
-        disable4AuthedUser:true,
         type:"WMTS",
         layerType:"toplayer",
         geometryType:"polygon",
