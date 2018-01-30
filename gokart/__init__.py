@@ -17,6 +17,10 @@ from .settings import *
 def index(app):
     return bottle.template('index.html', app=app,envType=ENV_TYPE)
 
+@bottle.route('/<app>/env.js')
+def env(app):
+    bottle.redirect('/dist/static/js/' + app + "-" + ENV_TYPE + ".env.js" , 302)
+
 profile_re = re.compile("gokartProfile\s*=\s*(?P<profile>\{.+\})\s*;?\s*exports.+default.+gokartProfile",re.DOTALL)
 envVersion_re = re.compile("envVersion\s*:\s*[\"\'](?P<version>[a-zA-Z0-9\.\:\-\ ]+)[\"\']")
 styleVersion_re = re.compile("\/\*\s*version\s*:\s*[\"\']?\s*(?P<version>[a-zA-Z0-9\.\:\-][a-zA-Z0-9\.\:\-\ ]+[a-zA-Z0-9\.\:\-])\s*[\"\']?\s*\*\/")
