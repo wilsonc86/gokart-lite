@@ -130,6 +130,35 @@ FeatureInfo.prototype.enable = function(enable) {
                             }
                         }
                     }
+                    //set the position
+                    if (vm._layer._featureInfo["position"] === "event") {
+                        vm._feats[index]["position"] = ev.latlng
+                    } else {
+                        var northPoint = null
+                        vm._getPosition = vm._getPosition || function(latlngs,position,referenceLatlng) {
+                            var point = null
+                            $.each(latlngs,function(i,latlng){
+                                if (Array.isArray(latlng)) {
+                                    latlng = vm._getPosition(latlng,position)
+                                }
+                                if (point === null) {
+                                    point = latlng
+                                } else if(position === "north") {
+                                    if (point.lat < latlng.lat) {
+                                        point = latlng
+                                    }
+                                } else if(position === "south") {
+                                    if (point.lat > latlng.lat) {
+                                        point = latlng
+                                    }
+                                } else  {
+                                    throw "Position '" + position + "' does not support."
+                                }
+                            })
+                            return point
+                        }
+                        vm._feats[index]["position"] = vm._getPosition(vm._feats[index]["geometry"].getLatLngs(),"north") || ev.latlng
+                    }
                 })
                 vm._featsSize = response.features.length
                 if (vm._featsSize < 2) {
@@ -137,7 +166,7 @@ FeatureInfo.prototype.enable = function(enable) {
                 } else {
                     vm._popupHtmlElement.find("#featureinfo_feature_navigator").show()
                 }
-                vm.selectFeature(0,ev)
+                vm.selectFeature(0)
 
             },
             error: function (xhr,status,message) {
@@ -178,6 +207,9 @@ FeatureInfo.prototype.setLayer = function(layer) {
             this.clear()
         }
         this._layer = layer
+        this._layer._featureInfo = this._layer._featureInfo || {}
+        this._layer._featureInfo["cache"] = this._layer._featureInfo["cache"] || false
+        this._layer._featureInfo["position"] = this._layer._featureInfo["position"] || "event" //current,support 'auto' and 'event'
         if (this._popupHtmlElement) {
             this._popupHtmlElement.find("#featureinfo_navigator_previous").off("click")
             this._popupHtmlElement.find("#featureinfo_navigator_next").off("click")
@@ -195,6 +227,9 @@ FeatureInfo.prototype.setLayer = function(layer) {
             }
         }
         this._popup = L.popup(options)
+        this._feats.length = 0
+        this._featsSize = 0
+        this._featIndex = -1
         this.enable(true)
     } else {
         // disable this interaction, but keep the last layer.
@@ -219,7 +254,7 @@ FeatureInfo.prototype.clear = function() {
     this._featsSize = 0
 }
 //select the feature for popup dialog
-FeatureInfo.prototype.selectFeature = function(index,ev) {
+FeatureInfo.prototype.selectFeature = function(index) {
     if (index < 0 || index >= this._featsSize) {
         index = 0
     }
@@ -236,12 +271,10 @@ FeatureInfo.prototype.selectFeature = function(index,ev) {
     }
     if (index === this._featIndex) {
         //choose the same feature
-        if (this._layer._featureInfo.highlight && this._layer._featureInfo && this._layer._featureInfo["cache"]) {
-            this._feats[index]["geometry"].openPopup((ev)?ev.latlng:undefined)
+        if (this._layer._featureInfo.highlight && this._layer._featureInfo["cache"]) {
+            this._feats[index]["geometry"].openPopup(this._feats[index]["position"])
         } else {
-            if (ev) {
-                this._popup.setLatLng(ev.latlng)
-            }
+            this._popup.setLatLng(this._feats[index]["position"])
             if (!this._popup.isOpen()) {
                 this._popup.openOn(this._map.getLMap())
             }
@@ -249,27 +282,23 @@ FeatureInfo.prototype.selectFeature = function(index,ev) {
     } else {
         if (this._layer._featureInfo.highlight) {
             if (this._featIndex >= 0) {
-                if (this._layer._featureInfo && this._layer._featureInfo["cache"]) {
+                if (this._layer._featureInfo["cache"]) {
                     this._feats[this._featIndex]["geometry"].unbindPopup()
                 }
                 this._feats[this._featIndex]["geometry"].remove()
             }
             this._feats[index]["geometry"].addTo(this._map.getLMap())
-            if (this._layer._featureInfo && this._layer._featureInfo["cache"]) {
+            if (this._layer._featureInfo["cache"]) {
                 this._feats[index]["geometry"].bindPopup(this._popup)
-                this._feats[index]["geometry"].openPopup(ev?ev.latlng:this._popup.getLatLng())
+                this._feats[index]["geometry"].openPopup(this._feats[index]["position"])
             } else {
-                if (ev) {
-                    this._popup.setLatLng(ev.latlng)
-                }
+                this._popup.setLatLng(this._feats[index]["position"])
                 if (!this._popup.isOpen()) {
                     this._popup.openOn(this._map.getLMap())
                 }
             }
         } else {
-            if (ev) {
-                this._popup.setLatLng(ev.latlng)
-            }
+            this._popup.setLatLng(this._feats[index]["position"])
             if (!this._popup.isOpen()) {
                 this._popup.openOn(this._map.getLMap())
             }
