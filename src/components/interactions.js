@@ -71,8 +71,10 @@ FeatureInfo.prototype.enable = function(enable) {
                     msg = "<div id='feature_info'><table>"
                     msg += "<tbody>"
                     if (vm._layer._featureInfo.properties) {
-                        $.each(vm._layer._featureInfo.properties,function(index,k){
-                            msg += "<tr><th>" + k.camelize() + "</th><td id=featureinfo_" + k + "></td></tr>"
+                        $.each(vm._layer._featureInfo.properties,function(index,prop){
+                            if (prop["name"] in feat.properties) {
+                                msg += "<tr><th>" + (prop["title"] || prop["name"].camelize()) + "</th><td id=featureinfo_" + prop["name"] + "></td></tr>"
+                            }
                         })
                     } else {
                         $.each(feat.properties,function(k,v){
@@ -112,8 +114,20 @@ FeatureInfo.prototype.enable = function(enable) {
                         vm._feats.push({"properties":{}})
                     }
                     if (vm._layer._featureInfo.properties) {
-                        $.each(vm._layer._featureInfo.properties,function(index2,k){
-                            vm._feats[index]["properties"][k] = (feat.properties[k] === null || feat.properties[k] === undefined)?null:feat.properties[k]
+                        $.each(vm._layer._featureInfo.properties,function(index2,prop){
+                            if (feat.properties[prop["name"]] === null || feat.properties[prop["name"]] === undefined) {
+                               vm._feats[index]["properties"][prop["name"]] = null
+                            } else {
+                                var value = feat.properties[prop["name"]]
+                                try {
+                                    if ("precision" in prop) {
+                                        value = parseFloat(value).toFixed(parseInt(prop["precision"]))
+                                    }
+                                } catch (ex) {
+                                    //ignore exception
+                                }
+                                vm._feats[index]["properties"][prop["name"]] = value
+                            }
                         })
                     } else {
                         $.each(feat.properties,function(k,v){
@@ -208,8 +222,18 @@ FeatureInfo.prototype.setLayer = function(layer) {
         }
         this._layer = layer
         this._layer._featureInfo = this._layer._featureInfo || {}
-        this._layer._featureInfo["cache"] = this._layer._featureInfo["cache"] || false
-        this._layer._featureInfo["position"] = this._layer._featureInfo["position"] || "event" //current,support 'auto' and 'event'
+        if (!this._layer._featureInfo["initialized"]) {
+            this._layer._featureInfo["initialized"] = true
+            this._layer._featureInfo["cache"] = this._layer._featureInfo["cache"] || false
+            this._layer._featureInfo["position"] = this._layer._featureInfo["position"] || "event" //current,support 'auto' and 'event'
+            if (this._layer._featureInfo["properties"]) {
+                for(var index = 0;index < this._layer._featureInfo["properties"].length;index++) {
+                    if (typeof this._layer._featureInfo["properties"][index] === "string") {
+                        this._layer._featureInfo["properties"][index] = {"name":this._layer._featureInfo["properties"][index]}
+                    }
+                }
+            }
+        }
         if (this._popupHtmlElement) {
             this._popupHtmlElement.find("#featureinfo_navigator_previous").off("click")
             this._popupHtmlElement.find("#featureinfo_navigator_next").off("click")
@@ -263,7 +287,7 @@ FeatureInfo.prototype.selectFeature = function(index) {
     var vm = this
     //replace the content
     $.each(this._feats[index]["properties"],function(k,v){
-        vm._popupHtmlElement.find("#featureinfo_" + k).text((v===null)?"&nbsp;":v)
+        vm._popupHtmlElement.find("#featureinfo_" + k).text((v===null)?"":v)
     })
     if (this._featsSize > 1) {
         vm._popupHtmlElement.find("#featureinfo_size").text(this._featsSize)

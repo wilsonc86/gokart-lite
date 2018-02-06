@@ -81,7 +81,7 @@ var gokartEnv = {
                 fillColor:"ff0000",
                 fillOpacity:0.3
             },
-            properties:["burnid","region","district","location","priority","purpose_1","program","area_ha","perim_km"]
+            properties: ["burnid","region","district","location","purpose_1",{name:"area_ha",precision:0},{name:"perim_km",precision:0}]
         }
     }],
     //configuration for feature info popup
