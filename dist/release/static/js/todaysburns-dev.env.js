@@ -14,6 +14,8 @@ var gokartEnv = {
     wmsService:"https://kmi.dpaw.wa.gov.au/geoserver/wms",
     wfsService:"https://kmi.dpaw.wa.gov.au/geoserver/wfs",
 
+    publicWmtsService:"https://kmi.dpaw.wa.gov.au/geoserver/public/gwc/service/wmts",
+
     app:"todaysburns",
     cswApp:"todaysburns",
 
