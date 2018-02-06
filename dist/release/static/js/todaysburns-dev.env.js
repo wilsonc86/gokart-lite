@@ -4,6 +4,8 @@ var gokartEnv = {
     envVersion:"2018-01-23 11:23",
     title:"Today's Burns",
 
+    whoamiUrl:"https://oim.dpaw.wa.gov.au/api/whoami/",
+
     gokartService:"https://ssslite-dev.dpaw.wa.gov.au",
 
     cswService:"https://oim.dpaw.wa.gov.au/catalogue/api/records/",
