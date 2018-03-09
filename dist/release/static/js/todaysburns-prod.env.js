@@ -1,14 +1,14 @@
 //indicative burning program
 var gokartEnv = {
     envType:"prod",
-    envVersion:"2018-01-23 11:23",
+    envVersion:"2018-03-11 07:02",
     title:"Today's Burns",
 
     whoamiUrl:"https://oim.dpaw.wa.gov.au/api/whoami/",
 
     gokartService:"https://ssslite.dpaw.wa.gov.au",
 
-    cswService:"https://oim.dpaw.wa.gov.au/catalogue/api/records/",
+    cswService:"https://csw.dpaw.wa.gov.au/catalogue/api/records/",
 
     wmtsService:"https://kmi.dpaw.wa.gov.au/geoserver/gwc/service/wmts",
     wmsService:"https://kmi.dpaw.wa.gov.au/geoserver/wms",
