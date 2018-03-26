@@ -30,7 +30,7 @@ var gokartEnv = {
         zoomControl:true,
         attributionControl:false,
         scaleControl:false,
-        fullscreenControl:true,
+        fullpageControl:true,
     
         zoomSnap:1,
         zoomDelta:1,
@@ -89,7 +89,7 @@ var gokartEnv = {
         options:{
         }
     },
-    fullscreenControl: {
+    fullpageControl: {
         options:{
         }
     }

@@ -38,9 +38,9 @@ Map.prototype.setOption = function(key,value,enforce) {
         value = getCRS(value)
     } else if (key === "maxBounds" && Array.isArray(value)) {
         value = L.latLngBounds(L.latLng(value[0],L.latLng(value[1])))
-    } else if(key === "fullscreenControl") {
+    } else if(key === "fullpageControl") {
         if (!this._embeded) {
-            //fullscreen control is not supported in non embeded environment
+            //fullpage control is not supported in non embeded environment
             return
         }
     } else if (!enforce && this._options[key] === value) {
@@ -93,17 +93,17 @@ Map.prototype.setOption = function(key,value,enforce) {
                 this.scaleControl.remove()
             }
         }
-    } else if(key === "fullscreenControl") {
+    } else if(key === "fullpageControl") {
         if (value) {
-            if (!this.fullscreenControl) {
-                this.fullscreenControl = L.control.fullscreen()
+            if (!this.fullpageControl) {
+                this.fullpageControl = L.control.fullpage()
             }
-            if (!this.fullscreenControl._map) {
-                this.fullscreenControl.addTo(this._map)
+            if (!this.fullpageControl._map) {
+                this.fullpageControl.addTo(this._map)
             }
         } else {
-            if (this.fullscreenControl && this.fullscreenControl._map) {
-                this.fullscreenControl.remove()
+            if (this.fullpageControl && this.fullpageControl._map) {
+                this.fullpageControl.remove()
             }
         }
     }
@@ -140,14 +140,14 @@ Map.prototype._create = function() {
         return
     }
     //create leaflet map
-    this._map = L.map(this._mapid,$.extend({},this._options,{zoomControl:false,attributionControl:false,scaleControl:false,fullscreenControl:false}))
+    this._map = L.map(this._mapid,$.extend({},this._options,{zoomControl:false,attributionControl:false,scaleControl:false,fullpageControl:false}))
 
     if (this._options["bounds"]) {
         this._map.fitBounds(this._options["bounds"])
     }
 
     var vm = this
-    $.each(["zoomControl","attributionControl","scaleControl","fullscreenControl"],function(index,key) {
+    $.each(["zoomControl","attributionControl","scaleControl","fullpageControl"],function(index,key) {
         vm.setOption(key,vm._options[key] || false,true)
     })
 

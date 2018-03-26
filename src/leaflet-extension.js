@@ -53,7 +53,7 @@ L.popup = function(){
 }()
 
 
-L.Control.Fullscreen = L.Control.extend({
+L.Control.Fullpage = L.Control.extend({
     options: {
         position:"topright"
     },
@@ -68,11 +68,11 @@ L.Control.Fullscreen = L.Control.extend({
             L.DomEvent.off(img,"click",this._onclick)
         }
     },
-    isFullscreen:function() {
-        return this._fullscreen
+    isFullpage:function() {
+        return this._fullpage
     },
-    toggleFullscreen:function() {
-        if (this._fullscreen) {
+    toggleFullpage:function() {
+        if (this._fullpage) {
             $(this._map._container).css({
                 position:"relative",
                 width:"100%",
@@ -82,9 +82,9 @@ L.Control.Fullscreen = L.Control.extend({
                 top:"0px",
                 left:"0px"
             })
-            this._button.src = gokartEnv.gokartService + '/dist/static/images/to-fullscreen.svg'
-        } else if (this.options["fullscreenStyle"]) {
-            $(this._map._container).css(this.options["fullscreenStyle"])
+            this._button.src = gokartEnv.gokartService + '/dist/static/images/to-fullpage.svg'
+        } else if (this.options["fullpageStyle"]) {
+            $(this._map._container).css(this.options["fullpageStyle"])
         } else {
             $(this._map._container).css({
                 position:"absolute",
@@ -95,35 +95,35 @@ L.Control.Fullscreen = L.Control.extend({
                 padding:"0px 0px 0px 0px",
                 margin:"0px 0px 0px 0px",
             })
-            this._button.src = gokartEnv.gokartService + '/dist/static/images/exit-fullscreen.svg'
+            this._button.src = gokartEnv.gokartService + '/dist/static/images/exit-fullpage.svg'
         }
         var center = this._map.getCenter()
         var zoom = this._map.getZoom()
         this._map.invalidateSize(); 
         this._map.setView(center,zoom)
-        this._fullscreen = !this._fullscreen
+        this._fullpage = !this._fullpage
     }
 })
 
-L.Control.Fullscreen.addInitHook(function() {
-    this._fullscreen = false
+L.Control.Fullpage.addInitHook(function() {
+    this._fullpage = false
     var vm = this
     this._button = L.DomUtil.create('img');
-    this._button.src = gokartEnv.gokartService + '/dist/static/images/to-fullscreen.svg';
-    this._button.id = "fullscreen_control";
+    this._button.src = gokartEnv.gokartService + '/dist/static/images/to-fullpage.svg';
+    this._button.id = "fullpage_control";
 
 
     this._onclick = this._onclick || function(ev) {
-        vm.toggleFullscreen()
+        vm.toggleFullpage()
     }
     L.DomEvent.disableClickPropagation(this._button)
 })
 
-L.control.fullscreen = function(opts) {
+L.control.fullpage = function(opts) {
     if (opts === undefined || opts === null) {
-        opts = (gokartEnv.fullscreenControl && gokartEnv.fullscreenControl.options)?gokartEnv.fullscreenControl.options:{}
+        opts = (gokartEnv.fullpageControl && gokartEnv.fullpageControl.options)?gokartEnv.fullpageControl.options:{}
     } 
-    return new L.Control.Fullscreen(opts)
+    return new L.Control.Fullpage(opts)
 }
 
 export default L
