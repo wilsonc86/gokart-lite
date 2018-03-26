@@ -30,7 +30,7 @@ var gokartEnv = {
         zoomControl:true,
         attributionControl:false,
         scaleControl:false,
-        fullpageControl:true,
+        fullpageControl:false,
     
         zoomSnap:1,
         zoomDelta:1,
