@@ -1,12 +1,17 @@
 import Map from './components/map.js'
 import {getCRS} from './components/crs.js'
 import {Layer} from './components/layer.js'
+import {utils} from 'src/vendor.js'
 
 var gokart = {};
 
 gokart.Map = Map;
 gokart.Layer = Layer;
 gokart.getCRS = getCRS;
+
+if (typeof gokartOptions !== 'undefined') {
+    gokartEnv = utils.extend(gokartEnv,gokartOptions)   
+}
 
 gokart.initialize = function(mapId) {
     //initialize gokartEnv

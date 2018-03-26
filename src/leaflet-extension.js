@@ -1,5 +1,6 @@
 import L from 'leaflet/dist/leaflet-src.js'
 import $ from 'jquery'
+import {utils} from 'src/vendor.js'
 
 //use 1024 as the tile size
 L.CRS.EPSG4326.scale = function(zoom) {
@@ -14,13 +15,11 @@ L.Map.prototype.setSize = function(width,height) {
         $(this._container).width(width)
     } else {
         $(this._container).width("100%")
-        width = $(this._container).width()
     }
     if (height) {
         $(this._container).height(height)
     } else {
         $(this._container).height("100%")
-        height = $(this._container).height()
     }
     var center = this.getCenter()
     var zoom = this.getZoom()
@@ -78,19 +77,30 @@ L.Control.Fullscreen = L.Control.extend({
                 position:"relative",
                 width:"100%",
                 height:"100%",
+                padding:"0px 0px 0px 0px",
+                margin:"0px 0px 0px 0px",
+                top:"0px",
+                left:"0px"
             })
             this._button.src = gokartEnv.gokartService + '/dist/static/images/to-fullscreen.svg'
+        } else if (this.options["fullscreenStyle"]) {
+            $(this._map._container).css(this.options["fullscreenStyle"])
         } else {
             $(this._map._container).css({
                 position:"absolute",
-                top:0,
-                left:0,
+                top:"0px",
+                left:"0px",
                 width:"100%",
                 height:"100%",
+                padding:"0px 0px 0px 0px",
+                margin:"0px 0px 0px 0px",
             })
             this._button.src = gokartEnv.gokartService + '/dist/static/images/exit-fullscreen.svg'
         }
-        this._map.setSize()
+        var center = this._map.getCenter()
+        var zoom = this._map.getZoom()
+        this._map.invalidateSize(); 
+        this._map.setView(center,zoom)
         this._fullscreen = !this._fullscreen
     }
 })
