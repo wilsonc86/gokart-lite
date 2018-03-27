@@ -60,7 +60,6 @@ Layer.getLayer = function(layer) {
             layer = new TileLayer(layer)
         } else {
             throw layer.serviceType + " not supported."
-            layer = null
         }
     }
     return layer
@@ -70,8 +69,14 @@ Layer.loadLayers = function(map) {
     gokartEnv.cswApp = (gokartEnv.cswApp || gokartEnv.app).toLowerCase()
     var vm = this
     var processLayers = function(layers) {
-        //merge the layers loaded from csw with layer cofigured in environment files and set the zIndex configured in environment file
-        var zIndex = 3
+        //merge the layers loaded from csw with layer cofigured in environment files and set the zIndex if it is not configured in environment file
+        //zindex: 
+        //  1: base layer
+        //  1000: top layer
+        //  2 - 999: over layer
+        //      2 - 299: system automatic allocated zindex for layers which zindex is not configured in environment file
+        //      300 - 999: user configured zindex
+        var zIndex = 2
         $.each(gokartEnv.layers || [],function(index,l) {
             var layer = layers.find(function(o) {return o.id === l.id})
             if (layer) {
@@ -85,7 +90,7 @@ Layer.loadLayers = function(map) {
                 layer.options["zIndex"] = 1
             } else if (layer.layerType === "toplayer") {
                 layer.options["zIndex"] = 1000
-            } else if (layer.options["zIndex"] && layer.options["zIndex"] >= 100 && layer.options["zIndex"] < 1000) {
+            } else if (layer.options["zIndex"] && layer.options["zIndex"] >= 300 && layer.options["zIndex"] < 1000) {
                 //do nothine
             } else {
                 layer.options["zIndex"] = zIndex
@@ -96,30 +101,26 @@ Layer.loadLayers = function(map) {
         $.each(layers,function(index,l) {
             if (l.layerType === "baselayer") {
                 l.options["opacity"] = 1
-                l.options["zIndex"] = 1
-                if (l.options["zIndex"] === null || l.options["zIndex"] === undefined) {
-                }
             } else if (l.layerType === "overlayer") {
-                if (l.options["zIndex"] === null || l.options["zIndex"] === undefined) {
-                    l.options["zIndex"] = 2
-                }
                 if (l.options["opacity"] === null || l.options["opacity"] === undefined) {
                     l.options["opacity"] = 0.5
                 }
             }  else {
-                l.options["zIndex"] = 1000
                 if (l.options["opacity"] === null || l.options["opacity"] === undefined) {
                     l.options["opacity"] = 0.8
                 }
             }
+            l.requireAuth = !(l.id.startsWith('public:'))
         })
         
         //add layers
+        var baselayers = {}
+        var overlayers = {}
+        var baselayerCount = 0
+        var overlayerCount = 0
         $.each(layers,function(index,l){
-            l.requireAuth = true
-            if (l.id.startsWith('public:')) {
+            if (!l.requireAuth) {
                 //public layer
-                l.requireAuth = false
                 if (map.isAuthenticated() && l.disable4AuthedUser) {
                     //disabled for auth user
                     return
@@ -131,18 +132,30 @@ Layer.loadLayers = function(map) {
             try {
                 l = Layer.getLayer(l)
             } catch(ex) {
+                console.error(ex)
                 alert(ex)
                 return
             }
-            if (l.isBaselayer() && Layer.baselayer === null) {
-                l.setMap(map)
+            if (l.isBaselayer()) {
+                if (Layer.baselayer === null) {
+                    l.setMap(map)
+                }
+                baselayers[l._title || l._id] = l.getMapLayer()
+                baselayerCount += 1
             } else if (l.isToplayer() && Layer.toplayer === null) {
                 l.setMap(map)
             } else if (l.isOverlayer()) {
                 l.setMap(map)
+                overlayers[l._title || l._id] = l.getMapLayer()
+                overlayerCount += 1
             }
-
         })
+
+        //add layer controls if required
+        if (baselayerCount > 1 || overlayerCount > 0) {
+            //has at least two base layers or on over layers, add the layer control
+            L.control.layers((baselayerCount > 1)?baselayers:null,(overlayerCount > 0)?overlayers:null).addTo(map.getLMap())
+        }
     }
 
     if (map.isAuthenticated()) {
@@ -183,6 +196,13 @@ Layer.prototype._create = function() {
 //return layer id
 Layer.prototype.getId = function() {
     return this._id
+}
+//return layer id
+Layer.prototype.getMapLayer = function() {
+    if (!this._mapLayer) {
+        this._create()
+    }
+    return this._mapLayer
 }
 //return true if it is  public layer;otherwise return false
 Layer.prototype.requireAuth = function() {
