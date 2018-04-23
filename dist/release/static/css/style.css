@@ -45,3 +45,9 @@
 .leaflet-popup .leaflet-popup-tip-container .leaflet-popup-tip {
     background-color:rgba(255, 255, 255, 0.9);
 }
+
+.leaflet-control .leaflet-control-layers-toggle {
+    background-image: url(/dist/static/images/layers.png);
+    width: 36px;
+    height: 36px;
+}
