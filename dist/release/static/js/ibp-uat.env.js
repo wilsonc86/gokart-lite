@@ -56,7 +56,7 @@ var gokartEnv = {
     //  all overlayers configure in enviromment with a valid zindex between 100 to 1000, will receive the configured zindex
     //toplayer are layers on the top, always has zindex 1000, only one top layer can be shown on map, user can click on the map to get the detail information of the related feature
     layers:[{
-        id:"public:mapbox-outdoors",
+        id:"public:mapbox-streets",
         serviceType:"WMTS",
         layerType:"baselayer",
         options:{
