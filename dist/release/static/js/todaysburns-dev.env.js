@@ -68,6 +68,7 @@ var gokartEnv = {
         geometryType:"polygon",
         geometryColumn:" wkb_geometry",
         options:{
+            style:"public:todays_burns.ShowPinpoint"
         },
         featureInfo:{
             highlight:true,
