@@ -1,10 +1,10 @@
-/* version: 2018-01-18 17:47 */
 #gokart_map  #feature_info table tbody th {
     white-space: nowrap;
 }
 #gokart_map  #feature_info table tfoot td {
     text-align:center;
 }
+
 #gokart_map  #feature_info .featureinfo_navigator_button {
     width:16px;
     height:16px;

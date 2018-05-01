@@ -1,7 +1,5 @@
 //indicative burning program
 var gokartEnv = {
-    envType:"dev",
-    envVersion:"2018-03-11 07:02",
     title:"Indicative Burning Program",
 
     whoamiUrl:"https://oim.dpaw.wa.gov.au/api/whoami/",

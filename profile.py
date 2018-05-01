@@ -40,7 +40,7 @@ def generate_app_profile():
     with open(vendor_file,"rb") as f:
         m.update(f.read())
 
-    vendor_md5 = base64.b64encode(m.digest())
+    vendor_md5 = base64.urlsafe_b64encode(m.digest()).rstrip("=")
 
     package.update({
         "build_datetime":now.strftime("%Y-%m-%d %H:%M:%S %Z(%z)"),

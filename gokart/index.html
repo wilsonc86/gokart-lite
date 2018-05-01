@@ -13,15 +13,15 @@
     <!-- favicon -->
     <link rel="icon" href="dist/static/images/favicon.svg" sizes="any" type="image/svg+xml" />
     <link rel="icon" href="dist/static/images/favicon-256.png" sizes="16x16 32x32 64x64 128x128 256x256" type="image/png" /> 
-    <link rel="stylesheet" property="stylesheet" type="text/css" href="dist/static/css/style.css" />
+    <link rel="stylesheet" property="stylesheet" type="text/css" href="dist/static/css/style.css?version={{profile["dependents"]["styleMD5"]}}" />
     <script src="https://static.dpaw.wa.gov.au/static/libs/jquery/3.2.1/jquery.min.js"></script>
   </head>
   <body style="margin:0px;">
     <!-- main global styles down here to load after all packaged styles -->
     <div id="gokart_map" ></div>
-    <script src="dist/static/js/{{ app }}-{{ envType }}.env.js"></script>
-    <script src="dist/vendor.js"></script>
-    <script src="dist/sss.js"></script>
+    <script src="dist/static/js/{{ app }}-{{ envType }}.env.js?version={{profile["dependents"]["envMD5"]}}"></script>
+    <script src="dist/vendor.js?version={{profile["dependents"]["vendorMD5"]}}"></script>
+    <script src="dist/sss.js?version={{profile["build"]["md5"]}}"></script>
     <script>
         $(window).on("resize", function () { 
             if (gokart.map) {

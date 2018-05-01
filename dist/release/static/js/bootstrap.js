@@ -1,28 +1,14 @@
-var loadGokart = function(options) {
-    var gokartDomain = null;
+var loadGokart = function(gokartDomain,gokartOptions,gokartProfile) {
     var scripts = [];
     var cssFiles = [];
-
-    var containerElement = document.getElementById(options.containerId)
+    var containerElement = document.getElementById(gokartOptions.containerId)
     if (!containerElement) {
-        throw options.containerId + " is not found."
+        throw gokartOptions.containerId + " doesn't exist."
     }
     var mapElementId = "gokart_map"
     var mapElement = document.createElement("div")
     mapElement.id = mapElementId
     containerElement.appendChild(mapElement)
-
-    for(var i = 0;i < document.scripts.length;i++) {
-        if (document.scripts[i].src.indexOf("/dist/static/js/bootstrap.js") >= 0) {
-            gokartDomain = document.scripts[i].src.substring(0,document.scripts[i].src.indexOf("/dist/static/js/bootstrap.js"))
-            break;
-
-        }
-    }
-
-    if (!gokartDomain) {
-        throw "/dist/static/js/bootstrap.js is not loaded"
-    }
 
     var getStaticUrl = function(url) {
         try {
@@ -53,7 +39,6 @@ var loadGokart = function(options) {
                 if (index < cssFiles.length - 1) {
                     importCssFile(index + 1,)
                 } else {
-                    console.log("End to load css file")
                     importScript(0)
                 }
 
@@ -77,7 +62,6 @@ var loadGokart = function(options) {
                 if (index < scripts.length - 1) {
                     importScript(index + 1,)
                 } else {
-                    console.log("End to load Gokart lite")
                     //set map element's size
                     $(mapElement).width($(containerElement).width())
                     $(mapElement).height($(containerElement).height())
@@ -91,24 +75,55 @@ var loadGokart = function(options) {
     })(document.head || document.getElementsByTagName("head")[0]);
 
 
-    cssFiles.push(gokartDomain + "/dist/static/css/style.css")
+    cssFiles.push(gokartDomain + "/dist/static/css/style.css?version=" + gokartProfile.dependents.styleMD5)
 
     var global = (typeof window !== "undefined" ? window : typeof global !== "undefined" ? global : null);
     if (!global || !global.$) {
         scripts.push(getStaticUrl("/static/libs/jquery/3.2.1/jquery.min.js"))
     }
 
-    scripts.push(gokartDomain + "/" + options.app + "/" + "env.js" ,gokartDomain + "/dist/vendor.js",gokartDomain + "/dist/sss.js")
+    scripts.push(gokartDomain + "/dist/static/js/" + gokartOptions.app + "-" + gokartProfile.envType + ".env.js?version=" + gokartProfile.dependents.envMD5 ,gokartDomain + "/dist/vendor.js?version=" + gokartProfile.dependents.vendorMD5,gokartDomain + "/dist/sss.js?version=" + gokartProfile.build.md5)
 
     importCssFile(0)
+}
 
+var loadProfile = function() {
+    for(var i = 0;i < document.scripts.length;i++) {
+        if (document.scripts[i].src.indexOf("/dist/static/js/bootstrap.js") >= 0) {
+            gokartDomain = document.scripts[i].src.substring(0,document.scripts[i].src.indexOf("/dist/static/js/bootstrap.js"))
+            break;
+
+        }
+    }
+
+    if (!gokartDomain) {
+        alert( "/dist/static/js/bootstrap.js is not loaded")
+        return
+    }
+
+    var req = new XMLHttpRequest()
+    req.addEventListener("load",function(){
+        gokartProfile = JSON.parse(req.response)
+        if (gokartProfile.dependents.vendorMD5 != gokartProfile.build.vendorMD5) {
+            alert("Application was built based on outdated vendor library, please build application again.")
+        } else {
+            loadGokart(gokartDomain,gokartOptions,gokartProfile)
+        }
+    })
+    req.addEventListener("error",function(){
+        alert("Load gokart failed")
+    })
+    req.open("GET",gokartDomain + "/profile/" + gokartOptions.app)
+    req.responseType = "text"
+    req.withCredentials = true
+    req.send()
 }
 if (gokartOptions) {
     if (document.readyState === "complete") {
-        loadGokart(gokartOptions)
+        loadProfile()
     } else {
         window.addEventListener("load",function(){
-            loadGokart(gokartOptions)
+            loadProfile()
         })
     }
 }
