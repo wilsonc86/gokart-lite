@@ -159,7 +159,6 @@ def _get_profile(app):
 
     return profile["profile"]
 
-application = bottle.default_app()
 @bottle.route("/profile/<app>")
 def profile(app):
     #get app profile
@@ -185,7 +184,5 @@ def index(app):
         bottle.response.set_header("Content-Type","text/plain")
         traceback.print_exc()
         return traceback.format_exception_only(sys.exc_type,sys.exc_value)
-
-    return bottle.template('index.html', app=app,envType=ENV_TYPE)
 
 application = bottle.default_app()
