@@ -51,8 +51,9 @@ FeatureInfo.prototype.enable = function(enable) {
             }
         }
         if (!url) {
-            var topLeft = vm._map.getLMap().layerPointToLatLng([ev.layerPoint.x - 10,ev.layerPoint.y - 10])
-            var bottomRight = vm._map.getLMap().layerPointToLatLng([ev.layerPoint.x + 10,ev.layerPoint.y + 10])
+            //use buffer to create a bbox around the click point, and use the bbox to get features from kmi 
+            var topLeft = vm._map.getLMap().layerPointToLatLng([ev.layerPoint.x - buffer,ev.layerPoint.y - buffer])
+            var bottomRight = vm._map.getLMap().layerPointToLatLng([ev.layerPoint.x + buffer,ev.layerPoint.y + buffer])
             var bbox = "&bbox=" + bottomRight[1] + "," + topLeft[0] + "," + topLeft[1] + "," + bottomRight[0]
             url = (vm._layer.requireAuth()?gokartEnv.wfsService:gokartEnv.publicWfsService) + "/wfs?service=wfs&version=2.0&request=GetFeature&outputFormat=application%2Fjson&typeNames=" + vm._layer.getId() + bbox
         }
