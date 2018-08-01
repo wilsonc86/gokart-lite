@@ -2,7 +2,7 @@
 var gokartEnv = {
     title:"Today's Burns",
 
-    whoamiUrl:"https://oim.dpaw.wa.gov.au/api/whoami/",
+    whoamiUrl:"/sso/profile",
 
     gokartService:"https://ssslite-local.dpaw.wa.gov.au",
 

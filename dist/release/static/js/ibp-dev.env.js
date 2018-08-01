@@ -2,7 +2,7 @@
 var gokartEnv = {
     title:"Indicative Burning Program",
 
-    whoamiUrl:"https://oim.dpaw.wa.gov.au/api/whoami/",
+    whoamiUrl:"/sso/profile",
 
     gokartService:"https://ssslite-dev.dpaw.wa.gov.au",
 
