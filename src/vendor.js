@@ -25,7 +25,7 @@ String.prototype.camelize = function(separator) {
     word = words[i].trim();
     if (word.length === 0) continue;
     if (["km","ha","mile","knot"].indexOf(word) >= 0) {
-        capitalizedWord = "(" + word + ")"
+        capitalizedWord = " (" + word + ")"
     } else {
         capitalizedWord = word.charAt(0).toUpperCase() + word.slice(1);
         if (result.length > 0) {
