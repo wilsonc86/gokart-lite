@@ -13,21 +13,20 @@ var FeatureInfo = function(map,eventType) {
     this._map = map
 
     var vm = this
-    $.each(gokartEnv.featureInfoPopup || {},function(key,value) {
-        vm["_" + key] = value
-    })
-    this._options = $.extend({},FeatureInfo.defaultOptions,this._options || {})
 
     this._layer = null
     this._eventType = eventType || "click"
     this._enabled = false
+    //_feats array is reused,
     this._feats = []
+    //indicate validate features in _feats array
     this._featsSize = 0
+    //the index of the feature shown in popup window
     this._featIndex = -1
     this._popup = null
     this._popupHtmlElement = null;
 
-    this._options = $.extend(FeatureInfo.defaultOptions,(gokartEnv.featureInfoPopup && gokartEnv.featureInfoPopup.options)?gokartEnv.featureInfoPopup.options:{})
+    this._popupOptions = $.extend(FeatureInfo.defaultOptions,(gokartEnv.featureInfoPopup && gokartEnv.featureInfoPopup.options)?gokartEnv.featureInfoPopup.options:{})
 }
 FeatureInfo.defaultOptions = {
     autoPan:true,
@@ -36,33 +35,50 @@ FeatureInfo.defaultOptions = {
 //enable/disable this interaction
 FeatureInfo.prototype.enable = function(enable) {
     var vm = this
-    this._showFeatureInfo = this._showFeatureInfo || function(ev) {
+    this._showFeatureInfo = this._showFeatureInfo || function(ev,tryTimes) {
         var url = null
-        var buffer = 10
+        tryTimes = tryTimes || 0
         if (!vm._map.inMaxBounds(ev.latlng)) {
             //not in the map bounds
             return
         }
-        if (vm._layer._geometryType === "polygon") {
-            if (!vm._layer._geometryColumn) {
-                buffer = 1
+        var buffer = null
+        if (tryTimes === 0) {
+            if (vm._layer._geometryType === "polygon") {
+                if (!vm._layer._geometryColumn) {
+                    buffer = vm._layer._featureInfo.buffer || 1
+                } else {
+                   url = (vm._layer.requireAuth()?gokartEnv.wfsService:gokartEnv.publicWfsService) + "/wfs?service=wfs&version=2.0&request=GetFeature&outputFormat=application%2Fjson&typeNames=" + vm._layer.getId() + "&cql_filter=CONTAINS(" + vm._layer._geometryColumn + ",POINT(" + ev.latlng.lat + " " + ev.latlng.lng + "))"
+                }
             } else {
-               url = (vm._layer.requireAuth()?gokartEnv.wfsService:gokartEnv.publicWfsService) + "/wfs?service=wfs&version=2.0&request=GetFeature&outputFormat=application%2Fjson&typeNames=" + vm._layer.getId() + "&cql_filter=CONTAINS(" + vm._layer._geometryColumn + ",POINT(" + ev.latlng.lat + " " + ev.latlng.lng + "))"
+                buffer = vm._layer._featureInfo.buffer || 10
             }
+        } else if (vm._map.getLMap().getZoom() < vm._layer._featureInfo.tryMinZoom ) {
+            //current zoom is less than try minzoom. try feature is disabled
+            return
+        } else if (tryTimes <= vm._layer._featureInfo.tryBuffers.length) {
+            buffer = vm._layer._featureInfo.tryBuffers[tryTimes - 1]
+        } else {
+            //run out of try times
+            return
         }
+        
         if (!url) {
             //use buffer to create a bbox around the click point, and use the bbox to get features from kmi 
             var topLeft = vm._map.getLMap().layerPointToLatLng([ev.layerPoint.x - buffer,ev.layerPoint.y - buffer])
             var bottomRight = vm._map.getLMap().layerPointToLatLng([ev.layerPoint.x + buffer,ev.layerPoint.y + buffer])
-            var bbox = "&bbox=" + bottomRight[1] + "," + topLeft[0] + "," + topLeft[1] + "," + bottomRight[0]
+            var bbox = "&bbox=" + bottomRight.lat + "," + topLeft.lng + "," + topLeft.lat + "," + bottomRight.lng
             url = (vm._layer.requireAuth()?gokartEnv.wfsService:gokartEnv.publicWfsService) + "/wfs?service=wfs&version=2.0&request=GetFeature&outputFormat=application%2Fjson&typeNames=" + vm._layer.getId() + bbox
         }
-
+        
         $.ajax({
             url:url,
             dataType:"json",
             success: function (response, stat, xhr) {
                 if (response.totalFeatures < 1) {
+                    if (vm._map.getLMap().getZoom() >= vm._layer._featureInfo.tryMinZoom ) {
+                        vm._showFeatureInfo(ev,tryTimes + 1)
+                    } 
                     return
                 }
                 var feat = response.features[0]
@@ -226,6 +242,18 @@ FeatureInfo.prototype.setLayer = function(layer) {
         if (!this._layer._featureInfo["initialized"]) {
             this._layer._featureInfo["initialized"] = true
             this._layer._featureInfo["cache"] = this._layer._featureInfo["cache"] || false
+            this._layer._featureInfo["tryMinZoom"] = parseInt(this._layer._featureInfo["tryMinZoom"]) || 999
+            //initialize tryBuffers
+            if (this._layer._featureInfo["tryBuffers"]) {
+                if (!Array.isArray(this._layer._featureInfo["tryBuffers"])) {
+                    this._layer._featureInfo["tryBuffers"] = [this._layer._featureInfo["tryBuffers"]]
+                }
+                for(var index = 0;index < this._layer._featureInfo["tryBuffers"].length;index++) {
+                    this._layer._featureInfo["tryBuffers"][index] = parseInt(this._layer._featureInfo["tryBuffers"][index])
+                }
+            } else {
+                this._layer._featureInfo["tryBuffers"] = [10]
+            }
             this._layer._featureInfo["position"] = this._layer._featureInfo["position"] || "event" //current,support 'auto' and 'event'
             if (this._layer._featureInfo["properties"]) {
                 for(var index = 0;index < this._layer._featureInfo["properties"].length;index++) {
@@ -240,7 +268,7 @@ FeatureInfo.prototype.setLayer = function(layer) {
             this._popupHtmlElement.find("#featureinfo_navigator_next").off("click")
             this._popupHtmlElement = null;
         }
-        var options = $.extend({},this._options)
+        var options = $.extend({},this._popupOptions)
         var vm = this
         if (this._layer._featureInfo.buttons) {
             options["buttons"] =[]

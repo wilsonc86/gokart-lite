@@ -21,7 +21,7 @@ var gokartEnv = {
         crs:"EPSG:4326",
         center:[-31.95296,115.86067 ],
         minZoom:2,
-        maxZoom:18,
+        maxZoom:17,
         maxBounds:[[-45,108.6],[-10,155]],
         bounds:[[-36,112.6],[-13,129.1]],
     
@@ -29,6 +29,7 @@ var gokartEnv = {
         attributionControl:false,
         scaleControl:false,
         fullpageControl:false,
+        featureCountControl:true,
     
         zoomSnap:1,
         zoomDelta:1,
@@ -71,6 +72,10 @@ var gokartEnv = {
         featureInfo:{
             highlight:true,
             buttons:["clear"],
+            tryMinZoom:6,
+            tryBuffers:10,
+            //used in the first time to fetch the features, default is 1 for polygon ,10 for others
+            buffer:1, 
             style:{
                 stroke:true,
                 color:"#ff0000",
@@ -90,6 +95,12 @@ var gokartEnv = {
     },
     fullpageControl: {
         options:{
+        }
+    },
+    featureCountControl:{
+        options:{
+            html:"<div style='color:#2a044e;font-weight:bold;font-size:18px'>Total Indicative Burning Program : <span id='todaysburns_count'></span> </div>",
+            featurecount_id : "todaysburns_count"
         }
     }
     

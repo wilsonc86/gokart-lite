@@ -5,7 +5,7 @@ import {
 
 import {Layer} from './layer.js'
 import {getCRS} from './crs.js'
-import {FeatureInfo} from './interactions.js'
+import {FeatureInfo} from './featureinfo.js'
 
 var Map = function (mapid,user) {
     this._user = user || {authenticated:false}
@@ -106,6 +106,19 @@ Map.prototype.setOption = function(key,value,enforce) {
                 this.fullpageControl.remove()
             }
         }
+    } else if(key === "featureCountControl") {
+        if (value) {
+            if (!this.featureCountControl) {
+                this.featureCountControl = L.control.featureCount()
+            }
+            if (!this.featureCountControl._map) {
+                this.featureCountControl.addTo(this._map)
+            }
+        } else {
+            if (this.featureCountControl && this.featureCountControl._map) {
+                this.featureCountControl.remove()
+            }
+        }
     }
 }
 //Return the leaflet object
@@ -147,7 +160,7 @@ Map.prototype._create = function() {
     }
 
     var vm = this
-    $.each(["zoomControl","attributionControl","scaleControl","fullpageControl"],function(index,key) {
+    $.each(["zoomControl","attributionControl","scaleControl","fullpageControl","featureCountControl"],function(index,key) {
         vm.setOption(key,vm._options[key] || false,true)
     })
 

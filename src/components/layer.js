@@ -17,10 +17,12 @@ var Layer = function(layer) {
         throw "Can't create a instance of a abstract class"
     }
     var vm = this
+    //get the options from env file,and append "_" to all option name
     $.each(layer,function(key,value) {
         vm["_" + key] = value
     })
 
+    //use the default options if not configured
     this._options = this._options || {}
     $.each(this.defaultOptions,function(key,value){
         if (!(key in vm._options)) {
@@ -247,6 +249,7 @@ Layer.prototype.setMap = function(map) {
         } else if (this.isToplayer()) {
             Layer.toplayer = this
             this._map.featureInfo.setLayer(this)
+            if (this._map.featureCountControl) this._map.featureCountControl.setLayer(this)
         }
 
     } else if(this._map) {
@@ -259,6 +262,7 @@ Layer.prototype.setMap = function(map) {
             //it is a current top layer
             Layer.toplayer = null
             this._map.featureInfo.setLayer(null)
+            if (this._map.featureCountControl) this._map.featureCountControl.setLayer(null)
         }
         this._map = null
     }

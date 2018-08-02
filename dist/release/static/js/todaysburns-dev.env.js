@@ -1,4 +1,4 @@
-//indicative burning program
+//today's burns
 var gokartEnv = {
     title:"Today's Burns",
 
@@ -21,14 +21,15 @@ var gokartEnv = {
         crs:"EPSG:4326",
         center:[-31.95296,115.86067 ],
         minZoom:2,
-        maxZoom:18,
+        maxZoom:17,
         maxBounds:[[-45,108.6],[-10,155]],
         bounds:[[-36,112.6],[-13,129.1]],
     
         zoomControl:true,
         attributionControl:false,
         scaleControl:false,
-        fullpageControl:false,
+        fullpageControl:true,
+        featureCountControl:true,
     
         zoomSnap:1,
         zoomDelta:1,
@@ -71,6 +72,10 @@ var gokartEnv = {
         featureInfo:{
             highlight:true,
             buttons:["clear"],
+            tryMinZoom:6,
+            tryBuffers:10,
+            //used in the first time to fetch the features, default is 1 for polygon ,10 for others
+            buffer:1, 
             style:{
                 stroke:true,
                 color:"#ff0000",
@@ -90,6 +95,12 @@ var gokartEnv = {
     },
     fullpageControl: {
         options:{
+        }
+    },
+    featureCountControl:{
+        options:{
+            html:"<B>Total Todays's Burns : <span id='todaysburns_count'></span> </B>",
+            featurecount_id : "todaysburns_count"
         }
     }
     
