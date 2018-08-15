@@ -92,6 +92,7 @@ var gokartEnv = {
             excluded_properties:["burn_target_date_raw","forest_blocks"],
             properties:[
                 {name:"burn_stat",title:"Burn Status"},
+                {name:"burn_target_date",title:"Updated On"},
                 {name:"indicative_area",title:"Indicative Area (ha)",precision:0},
                 {name:"burn_planned_area_today",title:"Burn Planned Area Today (ha)",precision:2},
                 {name:"burn_planned_distance_today",title:"Burn Planned Distance Today (km)",precision:2}
