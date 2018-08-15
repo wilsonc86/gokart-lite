@@ -84,25 +84,63 @@ FeatureInfo.prototype.enable = function(enable) {
                 var feat = response.features[0]
                 //populate the feature info
                 if (vm._popupHtmlElement === null) {
-                    var msg = null;
-                    msg = "<div id='feature_info'><table>"
-                    msg += "<tbody>"
-                    if (vm._layer._featureInfo.properties) {
-                        $.each(vm._layer._featureInfo.properties,function(index,prop){
-                            if (prop["name"] in feat.properties) {
-                                msg += "<tr><th>" + (prop["title"] || prop["name"].camelize()) + "</th><td id=featureinfo_" + prop["name"] + "></td></tr>"
-                            }
-                        })
-                    } else {
-                        $.each(feat.properties,function(k,v){
-                            if (["ogc_fid","md5_rowhash"].indexOf(k.toLowerCase()) >= 0 ) {
-                                return
-                            }
-                            msg += "<tr><th>" + k.camelize() + "</th><td id=featureinfo_" + k + "></td></tr>"
-                        })
+                    //initialize properties
+                    if (!(vm._layer._featureInfo["__properties"])) {
+                        vm._layer._featureInfo["__properties"] = []
+
+                        if (vm._layer._featureInfo.excluded_properties) {
+                            $.each(feat.properties,function(k,v){
+                                if (vm._layer._featureInfo.excluded_properties.find(function(prop){return prop === k})) {
+                                    //excluded
+                                    return
+                                } else {
+                                    var prop = vm._layer._featureInfo.properties.find(function(prop){return prop.name === k})
+                                    if (prop) {
+                                        //included
+                                        vm._layer._featureInfo["__properties"].push(prop)
+                                    } else if (["ogc_fid","md5_rowhash"].indexOf(k.toLowerCase()) >= 0 ) {
+                                        //automatically excluded
+                                        return
+                                    } else {
+                                        //automatically included
+                                        vm._layer._featureInfo["__properties"].push({"name":k,"title":k.camelize()})
+                                    }
+                                }
+                            })
+                        } else if (vm._layer._featureInfo.properties) {
+                            $.each(vm._layer._featureInfo.properties,function(index,prop){
+                                if (prop["name"] in feat.properties) {
+                                    vm._layer._featureInfo["__properties"].push(prop)
+                                }
+                            })
+                        } else {
+                            $.each(feat.properties,function(k,v){
+                                if (["ogc_fid","md5_rowhash"].indexOf(k.toLowerCase()) >= 0 ) {
+                                    //automatically excluded
+                                    return
+                                }
+                                vm._layer._featureInfo["__properties"].push({"name":k,"title":k.camelize()})
+                            })
+                        }
                     }
+                    
+                    var get_style = function(element) {
+                        if (vm._layer._featureInfo["infostyle"] && vm._layer._featureInfo["infostyle"][element]) {
+                            return " style=\"" + vm._layer._featureInfo["infostyle"][element] + "\" "
+                        } else {
+                            return ""
+                        }
+                    }
+                    var msg = null;
+                    msg = "<div id='feature_info'><table" + get_style("table") + ">"
+                    msg += "<tbody" + get_style("tbody") + ">"
+                    $.each(vm._layer._featureInfo["__properties"],function(index,prop){
+                        if (prop["name"] in feat.properties) {
+                            msg += "<tr" + get_style("tbody.tr") + "><th" + get_style("tbody.th") + ">" + prop["title"] + "</th><td id=\"featureinfo_" + prop["name"] + "\"" + get_style("tbody.td") + "></td></tr>"
+                        }
+                    })
                     msg += "</tbody>"
-                    msg += "<tfoot><tr id='featureinfo_feature_navigator'><td colspan='2'>"
+                    msg += "<tfoot" + get_style("tfoot") + "><tr id='featureinfo_feature_navigator'" + get_style("tfoot.tr") + "><td colspan='2'" + get_style("tfoot.td") + ">"
                     msg += "<img id='featureinfo_navigator_previous' class='featureinfo_navigator_button' src='" + gokartEnv.gokartService + "/dist/static/images/previous.svg'> <span id='featureinfo_current_index'></span>/<span id='featureinfo_size'></span> <img id='featureinfo_navigator_next' class='featureinfo_navigator_button' src='" + gokartEnv.gokartService + "/dist/static/images/next.svg'>"
                     msg += "</td></tr></tfoot>"
                     msg += "</table></div>"
@@ -130,27 +168,23 @@ FeatureInfo.prototype.enable = function(enable) {
                     if (index >= vm._feats.length) {
                         vm._feats.push({"properties":{}})
                     }
-                    if (vm._layer._featureInfo.properties) {
-                        $.each(vm._layer._featureInfo.properties,function(index2,prop){
-                            if (feat.properties[prop["name"]] === null || feat.properties[prop["name"]] === undefined) {
-                               vm._feats[index]["properties"][prop["name"]] = null
-                            } else {
-                                var value = feat.properties[prop["name"]]
-                                try {
-                                    if ("precision" in prop) {
-                                        value = parseFloat(value).toFixed(parseInt(prop["precision"]))
-                                    }
-                                } catch (ex) {
-                                    //ignore exception
+                    $.each(vm._layer._featureInfo["__properties"],function(index2,prop){
+                        if (feat.properties[prop["name"]] === null || feat.properties[prop["name"]] === undefined) {
+                           vm._feats[index]["properties"][prop["name"]] = null
+                        } else {
+                            var value = feat.properties[prop["name"]]
+                            try {
+                                if (!value) {
+                                    value = ""
+                                } else if ("precision" in prop) {
+                                    value = parseFloat(value).toFixed(parseInt(prop["precision"]))
                                 }
-                                vm._feats[index]["properties"][prop["name"]] = value
+                            } catch (ex) {
+                                //ignore exception
                             }
-                        })
-                    } else {
-                        $.each(feat.properties,function(k,v){
-                            vm._feats[index]["properties"][k] = (v === null || v === undefined)?null:v
-                        })
-                    }
+                            vm._feats[index]["properties"][prop["name"]] = value
+                        }
+                    })
                     //highlight the feature
                     if (vm._layer._featureInfo.highlight) {
                         if ( ["polygon","multipolygon"].indexOf(feat["geometry"]["type"].toLowerCase()) >= 0) {
@@ -255,10 +289,14 @@ FeatureInfo.prototype.setLayer = function(layer) {
                 this._layer._featureInfo["tryBuffers"] = [10]
             }
             this._layer._featureInfo["position"] = this._layer._featureInfo["position"] || "event" //current,support 'auto' and 'event'
+            this._layer._featureInfo["css"] = this._layer._featureInfo["css"] || {}
             if (this._layer._featureInfo["properties"]) {
                 for(var index = 0;index < this._layer._featureInfo["properties"].length;index++) {
                     if (typeof this._layer._featureInfo["properties"][index] === "string") {
-                        this._layer._featureInfo["properties"][index] = {"name":this._layer._featureInfo["properties"][index]}
+                        this._layer._featureInfo["properties"][index] = {"name":this._layer._featureInfo["properties"][index],"title":this._layer._featureInfo["properties"][index].camelize()}
+                    }
+                    if (!(this._layer._featureInfo["properties"][index]["title"])) {
+                        this._layer._featureInfo["properties"][index]["title"] = this._layer._featureInfo["properties"][index]["name"].camelize()
                     }
                 }
             }
@@ -268,7 +306,7 @@ FeatureInfo.prototype.setLayer = function(layer) {
             this._popupHtmlElement.find("#featureinfo_navigator_next").off("click")
             this._popupHtmlElement = null;
         }
-        var options = $.extend({},this._popupOptions)
+        var options = $.extend({},this._popupOptions,this._layer._featureInfo["popup_options"] || {})
         var vm = this
         if (this._layer._featureInfo.buttons) {
             options["buttons"] =[]

@@ -76,6 +76,10 @@ var gokartEnv = {
             tryBuffers:10,
             //used in the first time to fetch the features, default is 1 for polygon ,10 for others
             buffer:1, 
+            popup_options:{
+                minWidth:400,
+                maxWidth:450
+            },
             style:{
                 stroke:true,
                 color:"#ff0000",
@@ -85,7 +89,13 @@ var gokartEnv = {
                 fillColor:"ff0000",
                 fillOpacity:0.3
             },
-            //properties:["burnid","region","district","location","priority","purpose_1","program","area_ha","perim_km"]
+            excluded_properties:["burn_target_date_raw","forest_blocks"],
+            properties:[
+                {name:"burn_stat",title:"Burn Status"},
+                {name:"indicative_area",title:"Indicative Area (ha)",precision:0},
+                {name:"burn_planned_area_today",title:"Burn Planned Area Today (ha)",precision:2},
+                {name:"burn_planned_distance_today",title:"Burn Planned Distance Today (km)",precision:2}
+            ]
         }
     }],
     //configuration for feature info popup
