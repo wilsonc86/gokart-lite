@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Cordova CSP -->
+    <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob: filesystem: mediastream:;">
+    <!-- Unicode is great -->
+    <meta charset="utf-8" />
+    <title>gokart - Loading</title>
+    <!-- Disable awful IE compatibility mode -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <!-- Force fit-to-viewport sizing on mobile -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    <!-- favicon -->
+    <link rel="icon" href="dist/static/images/favicon.svg" sizes="any" type="image/svg+xml" />
+    <link rel="icon" href="dist/static/images/favicon-256.png" sizes="16x16 32x32 64x64 128x128 256x256" type="image/png" /> 
+    <link rel="stylesheet" property="stylesheet" type="text/css" href="dist/static/css/style.css?version={{profile["dependents"]["styleMD5"]}}" />
+    <script src="https://static.dpaw.wa.gov.au/static/libs/jquery/3.2.1/jquery.min.js"></script>
+  </head>
+  <body style="margin:0px;">
+    <!-- main global styles down here to load after all packaged styles -->
+    <div id="gokart_map" ></div>
+    <script src="dist/static/js/{{ app }}-{{ envType }}.env.js?version={{profile["dependents"]["envMD5"]}}"></script>
+    <script src="dist/vendor.js?version={{profile["dependents"]["vendorMD5"]}}"></script>
+    <script src="dist/sss.js?version={{profile["build"]["md5"]}}"></script>
+    <script>
+        $(window).on("resize", function () { 
+            if (gokart.map) {
+                gokart.map.setSize($(window).width(),$(window).height())
+            }
+        });
+        $(document).ready(function(){
+            $("#gokart_map").width($(window).width())
+            $("#gokart_map").height($(window).height())
+            gokart.initialize("gokart_map")
+            if (gokartEnv.title) {
+                document.title = gokartEnv.title
+            }
+        })
+    </script>
+  </body>
+</html>
