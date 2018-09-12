@@ -4,7 +4,7 @@ var todaysburnsEnv = {
 
     whoamiUrl:"/sso/profile",
 
-    gokartService:"https://ssslite-prod.dpaw.wa.gov.au",
+    gokartService:"https://ssslite.dpaw.wa.gov.au",
 
     cswService:"https://csw.dpaw.wa.gov.au/catalogue/api/records/",
 
@@ -64,7 +64,7 @@ var todaysburnsEnv = {
             }
         } else {
             if (now.getHours() < 7) {
-                return Gokart.utils.getNextDatetime(10,'minute') 
+                return Gokart.utils.getNextDatetime(7,'hour',now) 
             } else if (now.getHours() < 11) {
                 return Gokart.utils.getNextDatetime(2,'minute')
             } else if (now.getHours() < 15) {
