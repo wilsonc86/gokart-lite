@@ -31,9 +31,10 @@
         $(document).ready(function(){
             $("#gokart_map").width($(window).width())
             $("#gokart_map").height($(window).height())
-            gokart.initialize("gokart_map")
-            if (gokartEnv.title) {
-                document.title = gokartEnv.title
+            window.gokart = new Gokart("{{app}}","gokart_map")
+            eval("gokart_{{app}} = gokart")
+            if (gokart.env["title"]) {
+                document.title = gokart.env["title"]
             }
         })
     </script>

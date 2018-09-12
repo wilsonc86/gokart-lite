@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+ <meta charset="UTF-8"> 
+</head>
+<body>
+<h1>Three steps to embed the map widget for indicative burning program</h1>
+
+<h3>1. Configure gokart options</h3>
+<div  style="border-style:solid;">
+<pre><code>
+var gokartOptions = [{
+    app:"ibp", //the application name
+    containerId:"map1" //the id of the html element which contains the map widget
+    name:"gokartIbp" //the global variable name of this gokart instance, default is gokart_[app]
+},{
+    app:"todaysburns", //the application name
+    containerId:"map2" //the id of the html element which contains the map widget
+    name:"gokartTodaysburns" //the global variable name of this gokart instance, default is gokart_[app]
+}]
+
+</code>
+</pre>
+</div>
+
+<h3>2. Declare the html element to contain the map widget</h3>
+<div  style="border-style:solid;">
+<pre><code>
+&lt;div id="map1" style="border-style:double;width:100%;height:600px" /&gt;
+&lt;div id="map2" style="border-style:double;width:100%;height:600px" /&gt;
+</code>
+</pre>
+</div>
+
+<h3>3. Load gokart's bootstrap.js </h3>
+<div  style="border-style:solid;">
+<pre><code>
+&lt;script type="text/javascript" src="https://ssslite.dpaw.wa.gov.au/dist/static/js/bootstrap.js" &gt;&lt;/script&gt;
+</code>
+</pre>
+</div>
+
+<br>
+
+
+<script type="text/javascript">
+var gokartOptions = [{
+    app:"ibp",
+    containerId:"map1",
+    name:"gokartIbp"
+},{
+    app:"todaysburns",
+    containerId:"map2",
+    name:"gokartTodaysburns"
+}]
+</script>
+<table style="width:100%">
+    <tr>
+        <td style="width:50%">
+            <div id="map1" style="border-style:double;width:100%;height:600px"></div>
+        </td>
+        <td style="width:50%">
+            <div id="map2" style="border-style:double;width:100%;height:600px"></div>
+        </td>
+    </tr>
+</table>
+<script type="text/javascript" src="/dist/static/js/bootstrap.js"></script>
+</body>
+</html>
+
