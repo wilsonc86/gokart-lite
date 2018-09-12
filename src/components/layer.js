@@ -5,14 +5,7 @@ import {
 
 import {getCRS} from './crs.js'
 
-var _Layers = {
-}
-
-var Layer = function(layer) {
-    if (layer["id"] in _Layers) {
-        //layer id is already existed.
-        throw "The layer '" + layer["id"] + "' already exist."
-    }
+var Layer = function(map,layer) {
     if (this.constructor === Layer) {
         throw "Can't create a instance of a abstract class"
     }
@@ -31,55 +24,55 @@ var Layer = function(layer) {
     })
  
     this._mapLayer = null
-    this._map = null
-
-    //register this layer
-    _Layers[this._id] = this
+    this.map = map
+    this._featureCount = null
+    this.addTime = null
+    this.refreshTime = null
+    this._baseurl = null
 }
-//current base layer shown on map
-Layer.baselayer = null
-//current top layer shown on map
-Layer.toplayer = null
 //return a layer object
 //same layer id will return the same layer object
-Layer.getLayer = function(layer) {
-    var  layerid = null
-    if (typeof(layer) === "string") {
-        layerid = layer
-        if (layer in _Layers) {
-            layer = _Layers[layer]
-        } else {
-            throw "The layer '" + layer + "' is not found"
+Layer.getLayer = function(map,layer) {
+    try {
+         return map.getLayer(layer)
+    }catch (ex) {
+        if (layer instanceof Layer) {
+            //already a Layer instance, register it
+            map.regiterLayer(layer)
+        } else if (layer["id"]){
+            //a layer configuration json object, create a Layer instance and register it
+            var layerid = layer.id
+            layer.serviceType = layer.serviceType || "WMTS"
+            if (layer.serviceType === "WMS") {
+                layer = new WMSTileLayer(map,layer)
+            } else if (layer.serviceType === "WMTS") {
+                layer = new TileLayer(map,layer)
+            } else if (!layer.serviceType){
+                throw "serviceType is not configured for layer '" + layerid + "'."
+            } else {
+                throw layer.serviceType + " not supported."
+            }
+            map.registerLayer(layer)
         }
-    } else if (layer instanceof Layer){
-        layer = layer
-    } else {
-        layerid = layer.id
-        layer.serviceType = layer.serviceType || "WMTS"
-        if (layer.serviceType === "WMS") {
-            layer = new WMSTileLayer(layer)
-        } else if (layer.serviceType === "WMTS") {
-            layer = new TileLayer(layer)
-        } else {
-            throw layer.serviceType + " not supported."
-        }
+        return layer
     }
-    return layer
 }
+
 //load layers from csw and merge with layers configured in environment file; and then add them to map
 Layer.loadLayers = function(map) {
-    gokartEnv.cswApp = (gokartEnv.cswApp || gokartEnv.app).toLowerCase()
+    map.gokart.env["cswApp"] = (map.gokart.env["cswApp"] || map.gokart.env["app"]).toLowerCase()
     var vm = this
     var processLayers = function(layers) {
         //merge the layers loaded from csw with layer cofigured in environment files and set the zIndex if it is not configured in environment file
         //zindex: 
         //  1: base layer
-        //  1000: top layer
+        //  1000+: top layer
         //  2 - 999: over layer
         //      2 - 299: system automatic allocated zindex for layers which zindex is not configured in environment file
         //      300 - 999: user configured zindex
         var zIndex = 2
-        $.each(gokartEnv.layers || [],function(index,l) {
+        var toplayer_zIndex = 1000
+        $.each(map.gokart.env["layers"] || [],function(index,l) {
             var layer = layers.find(function(o) {return o.id === l.id})
             if (layer) {
                 $.extend(layer,l)
@@ -91,7 +84,8 @@ Layer.loadLayers = function(map) {
             if (layer.layerType === "baselayer") {
                 layer.options["zIndex"] = 1
             } else if (layer.layerType === "toplayer") {
-                layer.options["zIndex"] = 1000
+                layer.options["zIndex"] = toplayer_zIndex
+                toplayer_zIndex += 1
             } else if (layer.options["zIndex"] && layer.options["zIndex"] >= 300 && layer.options["zIndex"] < 1000) {
                 //do nothine
             } else {
@@ -132,30 +126,31 @@ Layer.loadLayers = function(map) {
                 return
             }
             try {
-                l = Layer.getLayer(l)
+                l = Layer.getLayer(map,l)
             } catch(ex) {
                 console.error(ex)
                 alert(ex)
                 return
             }
+
             if (l.isBaselayer()) {
-                if (Layer.baselayer === null) {
-                    l.setMap(map)
-                }
                 baselayers[l._title || l._id] = l.getMapLayer()
                 baselayerCount += 1
-            } else if (l.isToplayer() && Layer.toplayer === null) {
-                l.setMap(map)
+                if (baselayerCount === 1) {
+                    l.addToMap()
+                }
             } else if (l.isOverlayer()) {
-                l.setMap(map)
+                l.addToMap()
                 overlayers[l._title || l._id] = l.getMapLayer()
                 overlayerCount += 1
             }
         })
 
+        map.setToplayer()
+
         //add layer controls if required
         if (baselayerCount > 1 || overlayerCount > 0) {
-            //has at least two base layers or on over layers, add the layer control
+            //has at least two base layers or one over layers, add the layer control
             L.control.layers((baselayerCount > 1)?baselayers:null,(overlayerCount > 0)?overlayers:null).addTo(map.getLMap())
         }
     }
@@ -183,7 +178,7 @@ Layer.loadLayers = function(map) {
             console.error(msg)
             alert(msg)
         }
-        req.open('GET', gokartEnv.cswService + "?format=json&application__name=" + gokartEnv.cswApp)
+        req.open('GET', map.gokart.env["cswService"] + "?format=json&application__name=" + map.gokart.env["cswApp"])
         req.send()
     } else {
         processLayers([])
@@ -203,8 +198,58 @@ Layer.prototype.getId = function() {
 Layer.prototype.getMapLayer = function() {
     if (!this._mapLayer) {
         this._create()
+        this._baseurl = this._mapLayer._url
+        this._mapLayer.layer = this
+        this._mapLayer.on("add",function(ev){
+            var layer = this.layer
+            layer.addTime = new Date()
+            layer.refreshTime = layer.addTime
+            if (layer.isBaselayer()) {
+                layer.map.baselayer = layer
+            } else if (layer.isToplayer()) {
+                layer.map.toplayer = layer
+                layer.map.featureInfo.setLayer(layer)
+                if (layer.map.featureCountControl) layer.map.featureCountControl.setLayer(layer)
+                if (layer.map.layerMetadataControl) layer.map.layerMetadataControl.setLayer(layer)
+            }
+        })
+        this._mapLayer.on("remove",function(ev){
+            var layer = this.layer
+            layer.addTime = null
+            layer.refreshTime = null
+            if (layer.isBaselayer() && layer.map.baselayer === this.layer) {
+                layer.map.baselayer = null
+            } else if (layer.isToplayer() && layer.map.toplayer === this.layer) {
+                layer.map.featureInfo.setLayer(null)
+                if (layer.map.featureCountControl) layer.map.featureCountControl.setLayer(null)
+                if (layer.map.layerMetadataControl) layer.map.layerMetadataControl.setLayer(null)
+                layer.map.toplayer = null
+            }
+        })
+    //load and add layers
     }
     return this._mapLayer
+}
+
+Layer.prototype.refresh = function() {
+    if (!this.isAdded()) {
+        //not shown on map. return directly
+        return
+    }
+    this.refreshTime = new Date()
+    this._options["revision"] = (this._options["revision"] || 0) + 1
+    this._mapLayer._url = this._baseurl + "&revision=" + this._options["revision"]
+    this._mapLayer.redraw()
+    if (this.isToplayer()) {
+        if (this.map.featureCountControl) {
+            this.map.featureCountControl.showFeatureCount(true)
+        }
+        if (this.layerMetadataControl) {
+            this.map.layerMetadataControl.setLayer(this,true)
+        }
+
+    }
+    
 }
 //return true if it is  public layer;otherwise return false
 Layer.prototype.requireAuth = function() {
@@ -223,55 +268,80 @@ Layer.prototype.isToplayer = function() {
     return this._layerType === "toplayer"
 }
 
+Layer.prototype.isAdded = function() {
+    return (this._mapLayer && this._mapLayer._map)?true:false
+}
+
+Layer.prototype.getFeatureCount = function(refresh,successCallback,failedCallback) {
+    if (!successCallback) {
+        successCallback = function(featurecount) {
+            alert(featurecount)
+        }
+    }
+    if (!failedCallback) {
+        failedCallback = function(msg) {
+            alert(msg)
+        }
+    }
+    if (refresh || this._featureCount === null) {
+        var vm = this
+        var url = (this.requireAuth()?this.map.gokart.env["wfsService"]:this.map.gokart.env["publicWfsService"]) + "/wfs?service=wfs&version=1.1.0&request=GetFeature&typeNames=" + this.getId() + "&resultType=hits"
+        $.ajax({
+            url:url,
+            dataType:"xml",
+            success: function (response, stat, xhr) {
+                try {
+                    var previousFeaturecount = (vm._featureCount === undefined)?null:vm._featureCount
+                    vm._featureCount = parseInt(response.firstChild.getAttribute("numberOfFeatures"))
+                    successCallback(vm._featureCount,previousFeaturecount)
+                } catch(msg) {
+                    failedCallback(msg)
+                }
+            },
+            error: function (xhr,status,message) {
+                failedCallback(xhr.status + " : " + (xhr.responseText || message))
+            },
+            xhrFields: {
+                withCredentials: true
+            }
+        })
+    } else {
+        successCallback(this._featureCount)
+    }
+}
+
 //add to map if map is not null; remove from map if map is null
-Layer.prototype.setMap = function(map) {
-    if (map) {
+Layer.prototype.addToMap = function(add) {
+    if (add === undefined) {
+        add = true
+    }
+    if (add) {
         //add to map
-        if (this._map && this._map) {
+        if (this.isAdded()) {
             //already added to the map
             return
         } else if (!this._mapLayer) {
             //mapLayer is not created
-            this._create()
+            this.getMapLayer()
         }
-        if (this.isBaselayer() && Layer.baselayer) {
+        if (this.isBaselayer() && this.map.baselayer) {
             //remove the current base layer from map
-            layer.baselayer.setMap(null)
-        } else if (this.isToplayer() && Layer.toplayer) {
+            this.map.baselayer.addToMap(false)
+        } else if (this.isToplayer() && this.map.toplayer) {
             //remove the current top layer from map
-            layer.toplayer.setMap(null)
+            this.map.toplayer.addToMap(false)
         }
-        this._mapLayer.addTo(map.getLMap())
-
-        this._map = map
-        if (this.isBaselayer()) {
-            Layer.baselayer = this
-        } else if (this.isToplayer()) {
-            Layer.toplayer = this
-            this._map.featureInfo.setLayer(this)
-            if (this._map.featureCountControl) this._map.featureCountControl.setLayer(this)
-        }
-
-    } else if(this._map) {
+        this._mapLayer.addTo(this.map.getLMap())
+    } else if(this.isAdded()) {
         //remove from map
         this._mapLayer.remove()
-        if (Layer.baselayer === this) {
-            //it is a current base layer
-            Layer.baselayer = null
-        } else if (Layer.toplayer === this) {
-            //it is a current top layer
-            Layer.toplayer = null
-            this._map.featureInfo.setLayer(null)
-            if (this._map.featureCountControl) this._map.featureCountControl.setLayer(null)
-        }
-        this._map = null
     }
 }
 
 
 //WMS tile layer
-var WMSTileLayer = function(layer) {
-    Layer.call(this,layer)
+var WMSTileLayer = function(map,layer) {
+    Layer.call(this,map,layer)
     if ("crs" in this._options && typeof(this._options["crs"]) === "string") {
         this._options["crs"] = getCRS(this._options["crs"])
     }
@@ -298,14 +368,14 @@ WMSTileLayer.prototype.defaultOptions = {
 
 WMSTileLayer.prototype._create = function() {
     if (this._mapLayer) return
-    this._mapLayer = L.tileLayer.wms((this.requireAuth()?gokartEnv.wmsService:gokartEnv.publicWmsService),this._options)
+    this._mapLayer = L.tileLayer.wms((this.requireAuth()?this.map.gokart.env["wmsService"]:this.map.gokart.env["publicWmsService"]),this._options)
 }
 
 
 //Tile layer
-var TileLayer = function(layer) {
-    Layer.call(this,layer)
-    this._tileUrl = (this.requireAuth()?gokartEnv.wmtsService:gokartEnv.publicWmtsService) + "?layer=" + this._id + "&style=" + this._options["style"] + "&tilematrixset=" + this._options["tilematrixset"] + "&Service=WMTS&Request=GetTile&Version=1.0.0&Format=" + this._options["format"] + "&TileMatrix=" + this._options["tilematrixset"] + ":{z}&TileCol={x}&TileRow={y}"
+var TileLayer = function(map,layer) {
+    Layer.call(this,map,layer)
+    this._tileUrl = (this.requireAuth()?this.map.gokart.env["wmtsService"]:this.map.gokart.env["publicWmtsService"]) + "?layer=" + this._id + "&style=" + this._options["style"] + "&tilematrixset=" + this._options["tilematrixset"] + "&Service=WMTS&Request=GetTile&Version=1.0.0&Format=" + this._options["format"] + "&TileMatrix=" + this._options["tilematrixset"] + ":{z}&TileCol={x}&TileRow={y}"
 }
 
 TileLayer.prototype = Object.create(Layer.prototype)

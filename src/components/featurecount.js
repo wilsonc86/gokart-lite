@@ -6,54 +6,42 @@ L.Control.FeatureCount = L.Control.extend({
         position:"bottomleft"
     },
     setLayer:function(layer) {
+        if (!layer) {
+            this._layer = null
+            this._div.innerHTML = ""
+            this._featureCountId = "#featurecount"
+            return
+        }
         if (this._layer === layer) {
             //same layer
             return
         }
-        this._featurecount = null
+        this._featureCount = null
         this._layer = layer
+        if (this._layer._featureCountControl && this._layer._featureCountControl.options && this._layer._featureCountControl.options.html) {
+            this._div.innerHTML = this._layer._featureCountControl.options["html"]
+            this._featureCountId = "#" + (this._layer._featureCountControl.options["featurecount_id"] || "featurecount")
+        }
         if (this._map) {
             //already add to the map
-            this.getFeatureCount()
+            this.showFeatureCount()
         }
 
     },
-    getFeatureCount:function() {
+    showFeatureCount:function(refresh) {
+        var vm = this
         if (this._layer) {
-            if (this._featurecount === null) {
-                var vm = this
-                var url = (vm._layer.requireAuth()?gokartEnv.wfsService:gokartEnv.publicWfsService) + "/wfs?service=wfs&version=1.1.0&request=GetFeature&typeNames=" + vm._layer.getId() + "&resultType=hits"
-                $.ajax({
-                    url:url,
-                    dataType:"xml",
-                    success: function (response, stat, xhr) {
-                        try {
-                            vm._featurecount = parseInt(response.firstChild.getAttribute("numberOfFeatures"))
-                            if (vm._map) {
-                                $(vm._map._container).find("#" + vm._featurecount_id).html(vm._featurecount)
-                            }
-                        } catch(msg) {
-                            alert(msg)
-                        }
-                    },
-                    error: function (xhr,status,message) {
-                        alert(xhr.status + " : " + (xhr.responseText || message))
-                    },
-                    xhrFields: {
-                        withCredentials: true
-                    }
-                })
-            } else {
-                $(this._map._container).find(this._featurecount_id).innerHTML = this._featurecount
-            }
+            this._layer.getFeatureCount(refresh,function(featurecount){
+                $(vm._div).find(vm._featureCountId).html(featurecount)
+            },function(msg){
+                $(vm._div).find(vm._featureCountId).html(msg)
+            })
         } else {
-            this._featurecount = null
-            $(this._map._container).find(this._featurecount_id).innerHTML = ""
+            $(this._div).find(vm._featureCountId).html("")
         }
     },
     onAdd:function(map) {
         var vm = this
-        setTimeout(function(){vm.getFeatureCount()},500)
         return this._div;
     },
 
@@ -64,15 +52,23 @@ L.Control.FeatureCount.addInitHook(function() {
     this._layer = null
     this._div = L.DomUtil.create('div');
     this._div.id = "featurecount_control";
-    this._div.innerHTML = this.options["html"]
-    this._featurecount_id = this.options["featurecount_id"] || "featurecount"
+    if (this.options["html"]) {
+        this._div.innerHTML = this.options["html"]
+        this._featureCountId = "#" + (this.options["featurecount_id"] || "featurecount")
+    } else {
+        this._div.innerHTML = ""
+        this._featureCountId = "#featurecount"
+    }
+
 })
 
-L.control.featureCount = function(opts) {
+L.control.featureCount = function(map,opts) {
     if (opts === undefined || opts === null) {
-        opts = (gokartEnv.featureCountControl && gokartEnv.featureCountControl.options)?gokartEnv.featureCountControl.options:{}
+        opts = (map.gokart.env["featureCountControl"] && map.gokart.env["featureCountControl"]["options"])?map.gokart.env["featureCountControl"]["options"]:{}
     } 
-    return new L.Control.FeatureCount(opts)
+    var control = new L.Control.FeatureCount(opts)
+    control.map = map
+    return control
 }
 
 export default L

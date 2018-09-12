@@ -1,5 +1,5 @@
 //indicative burning program
-var gokartEnv = {
+var ibpEnv = {
     title:"Indicative Burning Program",
 
     whoamiUrl:"/sso/profile",
@@ -101,8 +101,8 @@ var gokartEnv = {
     },
     featureCountControl:{
         options:{
-            html:"<div style='color:#2a044e;font-weight:bold;font-size:18px'>Total Indicative Burning Program : <span id='todaysburns_count'></span> </div>",
-            featurecount_id : "todaysburns_count"
+            html:"<div style='color:#2a044e;font-weight:bold;font-size:18px'>Total Indicative Burning Program : <span id='ibp_count'></span> </div>",
+            featurecount_id : "ibp_count"
         }
     }
     
