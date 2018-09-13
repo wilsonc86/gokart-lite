@@ -51,11 +51,11 @@ var todaysburnsEnv = {
     getNextCheckDatetime : function(topLayer) {
         var now = new Date()
         if (topLayer._id === "public:todays_burns") {
-            if (!topLayer.addTime || new Date() - topLayer.addTime <= 600000) {
+            if ((!topLayer.addTime || new Date() - topLayer.addTime <= 600000) && (todaysburnsEnv._yesterdaysburnsShown || now.getHours() < 9 )) {
                 return Gokart.utils.getNextDatetime(2,'minute') 
-            } if (!topLayer.addTime || new Date() - topLayer.addTime <= 1800000) {
+            } if ((!topLayer.addTime || new Date() - topLayer.addTime <= 1800000) && (todaysburnsEnv._yesterdaysburnsShown || now.getHours() < 10 )) {
                 return Gokart.utils.getNextDatetime(5,'minute') 
-            } else if (!topLayer.addTime || new Date() - topLayer.addTime <= 3600000) {
+            } else if ((!topLayer.addTime || new Date() - topLayer.addTime <= 3600000) && (todaysburnsEnv._yesterdaysburnsShown || now.getHours() < 11 )) {
                 return Gokart.utils.getNextDatetime(10,'minute') 
             } else {
                 var d = Gokart.utils.getNextDatetime(1,'day')
@@ -63,6 +63,7 @@ var todaysburnsEnv = {
                 return d
             }
         } else {
+            todaysburnsEnv._yesterdaysburnsShown = true
             if (now.getHours() < 7) {
                 return Gokart.utils.getNextDatetime(7,'hour',now) 
             } else if (now.getHours() < 11) {
