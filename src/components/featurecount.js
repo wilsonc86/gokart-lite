@@ -19,8 +19,22 @@ L.Control.FeatureCount = L.Control.extend({
         this._featureCount = null
         this._layer = layer
         if (this._layer._featureCountControl && this._layer._featureCountControl.options && this._layer._featureCountControl.options.html) {
-            this._div.innerHTML = this._layer._featureCountControl.options["html"]
-            this._featureCountId = "#" + (this._layer._featureCountControl.options["featurecount_id"] || "featurecount")
+            this._featureCountId = null
+            var vm = this
+            if (typeof this._layer._featureCountControl.options["html"] === "function") {
+                this._layer._featureCountControl.options["html"].call(this._layer,function(html){
+                    vm._div.innerHTML = html
+                    vm._featureCountId = "#" + (vm._layer._featureCountControl.options["featurecount_id"] || "featurecount")
+                    if (vm._map) {
+                        //already add to the map
+                        vm.showFeatureCount()
+                    }
+                })
+                return
+            } else {
+                this._div.innerHTML = this._layer._featureCountControl.options["html"]
+                this._featureCountId = "#" + (this._layer._featureCountControl.options["featurecount_id"] || "featurecount")
+            }
         }
         if (this._map) {
             //already add to the map
@@ -52,9 +66,19 @@ L.Control.FeatureCount.addInitHook(function() {
     this._layer = null
     this._div = L.DomUtil.create('div');
     this._div.id = "featurecount_control";
+    this._featureCountId = null;
     if (this.options["html"]) {
-        this._div.innerHTML = this.options["html"]
-        this._featureCountId = "#" + (this.options["featurecount_id"] || "featurecount")
+        if (typeof this.options["html"] === "function") {
+            var vm = this
+            this.options["html"].call(this,function(html) {
+                vm._div.innerHTML = html
+                vm._featureCountId = "#" + (vm.options["featurecount_id"] || "featurecount")
+            })
+            return
+        } else {
+            this._div.innerHTML = this.options["html"]
+            this._featureCountId = "#" + (this.options["featurecount_id"] || "featurecount")
+        }
     } else {
         this._div.innerHTML = ""
         this._featureCountId = "#featurecount"

@@ -43,12 +43,13 @@ FeatureInfo.prototype.enable = function(enable) {
             return
         }
         var buffer = null
+        var params = null
         if (tryTimes === 0) {
             if (vm._layer._geometryType === "polygon") {
                 if (!vm._layer._geometryColumn) {
                     buffer = vm._layer._featureInfo.buffer || 1
                 } else {
-                   url = (vm._layer.requireAuth()?vm.map.gokart.env["wfsService"]:vm.map.gokart.env["publicWfsService"]) + "/wfs?service=wfs&version=2.0&request=GetFeature&outputFormat=application%2Fjson&typeNames=" + vm._layer.getId() + "&cql_filter=CONTAINS(" + vm._layer._geometryColumn + ",POINT(" + ev.latlng.lat + " " + ev.latlng.lng + "))"
+                    params = "cql_filter=CONTAINS(" + vm._layer._geometryColumn + ",POINT(" + ev.latlng.lat + " " + ev.latlng.lng + "))"
                 }
             } else {
                 buffer = vm._layer._featureInfo.buffer || 10
@@ -63,190 +64,177 @@ FeatureInfo.prototype.enable = function(enable) {
             return
         }
         
-        if (!url) {
+        if (!params) {
             //use buffer to create a bbox around the click point, and use the bbox to get features from kmi 
             var topLeft = vm.map.getLMap().layerPointToLatLng([ev.layerPoint.x - buffer,ev.layerPoint.y - buffer])
             var bottomRight = vm.map.getLMap().layerPointToLatLng([ev.layerPoint.x + buffer,ev.layerPoint.y + buffer])
-            var bbox = "&bbox=" + bottomRight.lat + "," + topLeft.lng + "," + topLeft.lat + "," + bottomRight.lng
-            url = (vm._layer.requireAuth()?vm.map.gokart.env["wfsService"]:vm.map.gokart.env["publicWfsService"]) + "/wfs?service=wfs&version=2.0&request=GetFeature&outputFormat=application%2Fjson&typeNames=" + vm._layer.getId() + bbox
+            params = "bbox=" + bottomRight.lat + "," + topLeft.lng + "," + topLeft.lat + "," + bottomRight.lng
         }
 
         var currentLayer = vm._layer
         
-        $.ajax({
-            url:url,
-            dataType:"json",
-            success: function (response, stat, xhr) {
-                if (response.totalFeatures < 1) {
-                    if (vm.map.getLMap().getZoom() >= vm._layer._featureInfo.tryMinZoom ) {
-                        vm._showFeatureInfo(ev,tryTimes + 1)
-                    } 
-                    return
-                }
-                if (currentLayer != vm._layer) {
-                    //layer changed, ignore
-                    return
-                }
-                var feat = response.features[0]
-                //populate the feature info
-                if (vm._layer._featureInfo["__popupHtmlElement"] === undefined || vm._layer._featureInfo["__popupHtmlElement"] === null) {
-                    //initialize properties
-                    vm._layer._featureInfo["__properties"] = []
+        vm._layer.getFeatures(params,function (totalFeatures,features) {
+            if (totalFeatures < 1) {
+                if (vm.map.getLMap().getZoom() >= vm._layer._featureInfo.tryMinZoom ) {
+                    vm._showFeatureInfo(ev,tryTimes + 1)
+                } 
+                return
+            }
+            if (currentLayer != vm._layer) {
+                //layer changed, ignore
+                return
+            }
+            var feat = features[0]
+            //populate the feature info
+            if (vm._layer._featureInfo["__popupHtmlElement"] === undefined || vm._layer._featureInfo["__popupHtmlElement"] === null) {
+                //initialize properties
+                vm._layer._featureInfo["__properties"] = []
 
-                    if (vm._layer._featureInfo.excluded_properties) {
-                        $.each(feat.properties,function(k,v){
-                            if (vm._layer._featureInfo.excluded_properties.find(function(prop){return prop === k})) {
-                                //excluded
-                                return
-                            } else {
-                                var prop = vm._layer._featureInfo.properties.find(function(prop){return prop.name === k})
-                                if (prop) {
-                                    //included
-                                    vm._layer._featureInfo["__properties"].push(prop)
-                                } else if (["ogc_fid","md5_rowhash"].indexOf(k.toLowerCase()) >= 0 ) {
-                                    //automatically excluded
-                                    return
-                                } else {
-                                    //automatically included
-                                    vm._layer._featureInfo["__properties"].push({"name":k,"title":k.camelize()})
-                                }
-                            }
-                        })
-                    } else if (vm._layer._featureInfo.properties) {
-                        $.each(vm._layer._featureInfo.properties,function(index,prop){
-                            if (prop["name"] in feat.properties) {
+                if (vm._layer._featureInfo.excluded_properties) {
+                    $.each(feat.properties,function(k,v){
+                        if (vm._layer._featureInfo.excluded_properties.find(function(prop){return prop === k})) {
+                            //excluded
+                            return
+                        } else {
+                            var prop = vm._layer._featureInfo.properties.find(function(prop){return prop.name === k})
+                            if (prop) {
+                                //included
                                 vm._layer._featureInfo["__properties"].push(prop)
-                            }
-                        })
-                    } else {
-                        $.each(feat.properties,function(k,v){
-                            if (["ogc_fid","md5_rowhash"].indexOf(k.toLowerCase()) >= 0 ) {
+                            } else if (["ogc_fid","md5_rowhash"].indexOf(k.toLowerCase()) >= 0 ) {
                                 //automatically excluded
                                 return
-                            }
-                            vm._layer._featureInfo["__properties"].push({"name":k,"title":k.camelize()})
-                        })
-                    }
-                    
-                    var get_style = function(element) {
-                        if (vm._layer._featureInfo["infostyle"] && vm._layer._featureInfo["infostyle"][element]) {
-                            return " style=\"" + vm._layer._featureInfo["infostyle"][element] + "\" "
-                        } else {
-                            return ""
-                        }
-                    }
-                    var msg = null;
-                    msg = "<div class='gokart_feature_info'><table" + get_style("table") + ">"
-                    msg += "<tbody" + get_style("tbody") + ">"
-                    $.each(vm._layer._featureInfo["__properties"],function(index,prop){
-                        if (prop["name"] in feat.properties) {
-                            msg += "<tr" + get_style("tbody.tr") + "><th" + get_style("tbody.th") + ">" + prop["title"] + "</th><td id=\"featureinfo_" + prop["name"] + "\"" + get_style("tbody.td") + "></td></tr>"
-                        }
-                    })
-                    msg += "</tbody>"
-                    msg += "<tfoot" + get_style("tfoot") + "><tr id='featureinfo_navigator' class='featureinfo_navigator'" + get_style("tfoot.tr") + "><td colspan='2'" + get_style("tfoot.td") + ">"
-                    msg += "<img id='featureinfo_navigator_previous' class='featureinfo_navigator_button' src='" + vm.map.gokart.env["gokartService"] + "/dist/static/images/previous.svg'> <span id='featureinfo_current_index'></span>/<span id='featureinfo_size'></span> <img id='featureinfo_navigator_next' class='featureinfo_navigator_button' src='" + vm.map.gokart.env["gokartService"] + "/dist/static/images/next.svg'>"
-                    msg += "</td></tr></tfoot>"
-                    msg += "</table></div>"
-
-                    vm._layer._featureInfo["__popupHtmlElement"] = $($.parseHTML(msg))
-                }
-                if (vm._setPopupContent) {
-                    vm._layer._featureInfo["__popupHtmlElement"].find("#featureinfo_navigator_previous").on("click",function(ev){
-                        ev.stopPropagation()
-                        if (vm._featIndex <= 0) {
-                            vm.selectFeature(vm._featsSize - 1)
-                        } else {
-                            vm.selectFeature(vm._featIndex - 1)
-                        }
-                    })
-                    vm._layer._featureInfo["__popupHtmlElement"].find("#featureinfo_navigator_next").on("click",function(ev){
-                        ev.stopPropagation()
-                        if (vm._featIndex >= vm._featsSize) {
-                            vm.selectFeature(0)
-                        } else {
-                            vm.selectFeature(vm._featIndex + 1)
-                        }
-                    })
-                    vm._popup.setContent(vm._layer._featureInfo["__popupHtmlElement"].get(0))
-                }
-                $.each(response.features,function(index,feat) {
-                    if (index >= vm._feats.length) {
-                        vm._feats.push({"properties":{}})
-                    }
-                    $.each(vm._layer._featureInfo["__properties"],function(index2,prop){
-                        if (feat.properties[prop["name"]] === null || feat.properties[prop["name"]] === undefined) {
-                           vm._feats[index]["properties"][prop["name"]] = null
-                        } else {
-                            var value = feat.properties[prop["name"]]
-                            try {
-                                if (!value) {
-                                    value = ""
-                                } else if ("precision" in prop) {
-                                    value = parseFloat(value).toFixed(parseInt(prop["precision"]))
-                                }
-                            } catch (ex) {
-                                //ignore exception
-                            }
-                            vm._feats[index]["properties"][prop["name"]] = value
-                        }
-                    })
-                    //highlight the feature
-                    if (vm._layer._featureInfo.highlight) {
-                        if ( ["polygon","multipolygon"].indexOf(feat["geometry"]["type"].toLowerCase()) >= 0) {
-                            if (vm._feats[index]["geometry"]) {
-                                vm._feats[index]["geometry"].setLatLngs(L.GeoJSON.coordsToLatLngs(feat["geometry"]["coordinates"],2))
                             } else {
-                                vm._feats[index]["geometry"] = L.polygon(L.GeoJSON.coordsToLatLngs(feat["geometry"]["coordinates"],2),vm._layer._featureInfo.style || {})
+                                //automatically included
+                                vm._layer._featureInfo["__properties"].push({"name":k,"title":k.camelize()})
                             }
                         }
-                    }
-                    //set the position
-                    if (vm._layer._featureInfo["position"] === "event") {
-                        vm._feats[index]["position"] = ev.latlng
-                    } else {
-                        var northPoint = null
-                        vm._getPosition = vm._getPosition || function(latlngs,position,referenceLatlng) {
-                            var point = null
-                            $.each(latlngs,function(i,latlng){
-                                if (Array.isArray(latlng)) {
-                                    latlng = vm._getPosition(latlng,position)
-                                }
-                                if (point === null) {
-                                    point = latlng
-                                } else if(position === "north") {
-                                    if (point.lat < latlng.lat) {
-                                        point = latlng
-                                    }
-                                } else if(position === "south") {
-                                    if (point.lat > latlng.lat) {
-                                        point = latlng
-                                    }
-                                } else  {
-                                    throw "Position '" + position + "' does not support."
-                                }
-                            })
-                            return point
+                    })
+                } else if (vm._layer._featureInfo.properties) {
+                    $.each(vm._layer._featureInfo.properties,function(index,prop){
+                        if (prop["name"] in feat.properties) {
+                            vm._layer._featureInfo["__properties"].push(prop)
                         }
-                        vm._feats[index]["position"] = vm._getPosition(vm._feats[index]["geometry"].getLatLngs(),"north") || ev.latlng
+                    })
+                } else {
+                    $.each(feat.properties,function(k,v){
+                        if (["ogc_fid","md5_rowhash"].indexOf(k.toLowerCase()) >= 0 ) {
+                            //automatically excluded
+                            return
+                        }
+                        vm._layer._featureInfo["__properties"].push({"name":k,"title":k.camelize()})
+                    })
+                }
+                
+                var get_style = function(element) {
+                    if (vm._layer._featureInfo["infostyle"] && vm._layer._featureInfo["infostyle"][element]) {
+                        return " style=\"" + vm._layer._featureInfo["infostyle"][element] + "\" "
+                    } else {
+                        return ""
+                    }
+                }
+                var msg = null;
+                msg = "<div class='gokart_feature_info'><table" + get_style("table") + ">"
+                msg += "<tbody" + get_style("tbody") + ">"
+                $.each(vm._layer._featureInfo["__properties"],function(index,prop){
+                    if (prop["name"] in feat.properties) {
+                        msg += "<tr" + get_style("tbody.tr") + "><th" + get_style("tbody.th") + ">" + prop["title"] + "</th><td id=\"featureinfo_" + prop["name"] + "\"" + get_style("tbody.td") + "></td></tr>"
                     }
                 })
-                vm._featsSize = response.features.length
-                if (vm._featsSize < 2) {
-                    vm._layer._featureInfo["__popupHtmlElement"].find("#featureinfo_navigator").hide()
-                } else {
-                    vm._layer._featureInfo["__popupHtmlElement"].find("#featureinfo_navigator").show()
-                }
-                vm.selectFeature(0)
+                msg += "</tbody>"
+                msg += "<tfoot" + get_style("tfoot") + "><tr id='featureinfo_navigator' class='featureinfo_navigator'" + get_style("tfoot.tr") + "><td colspan='2'" + get_style("tfoot.td") + ">"
+                msg += "<img id='featureinfo_navigator_previous' class='featureinfo_navigator_button' src='" + vm.map.gokart.env["gokartService"] + "/dist/static/images/previous.svg'> <span id='featureinfo_current_index'></span>/<span id='featureinfo_size'></span> <img id='featureinfo_navigator_next' class='featureinfo_navigator_button' src='" + vm.map.gokart.env["gokartService"] + "/dist/static/images/next.svg'>"
+                msg += "</td></tr></tfoot>"
+                msg += "</table></div>"
 
-            },
-            error: function (xhr,status,message) {
-                vm.warning = true
-                alert(xhr.status + " : " + (xhr.responseText || message))
-            },
-            xhrFields: {
-                withCredentials: true
+                vm._layer._featureInfo["__popupHtmlElement"] = $($.parseHTML(msg))
             }
+            if (vm._setPopupContent) {
+                vm._layer._featureInfo["__popupHtmlElement"].find("#featureinfo_navigator_previous").on("click",function(ev){
+                    ev.stopPropagation()
+                    if (vm._featIndex <= 0) {
+                        vm.selectFeature(vm._featsSize - 1)
+                    } else {
+                        vm.selectFeature(vm._featIndex - 1)
+                    }
+                })
+                vm._layer._featureInfo["__popupHtmlElement"].find("#featureinfo_navigator_next").on("click",function(ev){
+                    ev.stopPropagation()
+                    if (vm._featIndex >= vm._featsSize) {
+                        vm.selectFeature(0)
+                    } else {
+                        vm.selectFeature(vm._featIndex + 1)
+                    }
+                })
+                vm._popup.setContent(vm._layer._featureInfo["__popupHtmlElement"].get(0))
+            }
+            $.each(features,function(index,feat) {
+                if (index >= vm._feats.length) {
+                    vm._feats.push({"properties":{}})
+                }
+                $.each(vm._layer._featureInfo["__properties"],function(index2,prop){
+                    if (feat.properties[prop["name"]] === null || feat.properties[prop["name"]] === undefined) {
+                       vm._feats[index]["properties"][prop["name"]] = null
+                    } else {
+                        var value = feat.properties[prop["name"]]
+                        try {
+                            if (!value) {
+                                value = ""
+                            } else if ("precision" in prop) {
+                                value = parseFloat(value).toFixed(parseInt(prop["precision"]))
+                            }
+                        } catch (ex) {
+                            //ignore exception
+                        }
+                        vm._feats[index]["properties"][prop["name"]] = value
+                    }
+                })
+                //highlight the feature
+                if (vm._layer._featureInfo.highlight) {
+                    if ( ["polygon","multipolygon"].indexOf(feat["geometry"]["type"].toLowerCase()) >= 0) {
+                        if (vm._feats[index]["geometry"]) {
+                            vm._feats[index]["geometry"].setLatLngs(L.GeoJSON.coordsToLatLngs(feat["geometry"]["coordinates"],2))
+                        } else {
+                            vm._feats[index]["geometry"] = L.polygon(L.GeoJSON.coordsToLatLngs(feat["geometry"]["coordinates"],2),vm._layer._featureInfo.style || {})
+                        }
+                    }
+                }
+                //set the position
+                if (vm._layer._featureInfo["position"] === "event") {
+                    vm._feats[index]["position"] = ev.latlng
+                } else {
+                    var northPoint = null
+                    vm._getPosition = vm._getPosition || function(latlngs,position,referenceLatlng) {
+                        var point = null
+                        $.each(latlngs,function(i,latlng){
+                            if (Array.isArray(latlng)) {
+                                latlng = vm._getPosition(latlng,position)
+                            }
+                            if (point === null) {
+                                point = latlng
+                            } else if(position === "north") {
+                                if (point.lat < latlng.lat) {
+                                    point = latlng
+                                }
+                            } else if(position === "south") {
+                                if (point.lat > latlng.lat) {
+                                    point = latlng
+                                }
+                            } else  {
+                                throw "Position '" + position + "' does not support."
+                            }
+                        })
+                        return point
+                    }
+                    vm._feats[index]["position"] = vm._getPosition(vm._feats[index]["geometry"].getLatLngs(),"north") || ev.latlng
+                }
+            })
+            vm._featsSize = features.length
+            if (vm._featsSize < 2) {
+                vm._layer._featureInfo["__popupHtmlElement"].find("#featureinfo_navigator").hide()
+            } else {
+                vm._layer._featureInfo["__popupHtmlElement"].find("#featureinfo_navigator").show()
+            }
+            vm.selectFeature(0)
         })
 
     }
