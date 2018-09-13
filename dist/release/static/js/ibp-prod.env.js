@@ -22,7 +22,7 @@ var ibpEnv = {
         center:[-31.95296,115.86067 ],
         minZoom:2,
         maxZoom:17,
-        maxBounds:[[-45,108.6],[-10,155]],
+        maxBounds:[[-36,112.6],[-13,129.1]],
         bounds:[[-36,112.6],[-13,129.1]],
     
         zoomControl:true,
