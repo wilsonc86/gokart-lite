@@ -268,8 +268,50 @@ Layer.prototype.isToplayer = function() {
     return this._layerType === "toplayer"
 }
 
+Layer.prototype.wfsService = function() {
+    return this.requireAuth()?this.map.gokart.env["wfsService"]:this.map.gokart.env["publicWfsService"]
+}
+
 Layer.prototype.isAdded = function() {
     return (this._mapLayer && this._mapLayer._map)?true:false
+}
+
+//get features from kmi
+//params: extra wfs parameters if have
+//version : wfsVersion
+Layer.prototype.getFeatures = function(params,successCallback,failedCallback,version) {
+    if (!successCallback) {
+        successCallback = function(totalFeatures,features) {
+            console.log("Total Features : " + totalFeatures)
+            console.log(features)
+        }
+    }
+    if (!failedCallback) {
+        failedCallback = function(msg) {
+            alert(msg)
+        }
+    }
+    version = version || "2.0.0"
+    var url = null
+    if (version === "2.0.0") {
+        url = this.wfsService() + "?service=wfs&version=2.0.0&request=GetFeature&outputFormat=application%2Fjson&typeNames=" + this.getId() + (params?("&" + params):"")
+    } else {
+        failedCallback("WFS version " + version + " Not Support")
+        return
+    }
+    $.ajax({
+        url:url,
+        dataType:"json",
+        success: function (response, stat, xhr) {
+            successCallback(response.totalFeatures,response.features)
+        },
+        error: function (xhr,status,message) {
+            failedCallback(xhr.status + " : " + (xhr.responseText || message))
+        },
+        xhrFields: {
+            withCredentials: true
+        }
+    })
 }
 
 Layer.prototype.getFeatureCount = function(refresh,successCallback,failedCallback) {
@@ -285,7 +327,7 @@ Layer.prototype.getFeatureCount = function(refresh,successCallback,failedCallbac
     }
     if (refresh || this._featureCount === null) {
         var vm = this
-        var url = (this.requireAuth()?this.map.gokart.env["wfsService"]:this.map.gokart.env["publicWfsService"]) + "/wfs?service=wfs&version=1.1.0&request=GetFeature&typeNames=" + this.getId() + "&resultType=hits"
+        var url = this.wfsService() + "?service=wfs&version=1.1.0&request=GetFeature&typeNames=" + this.getId() + "&resultType=hits"
         $.ajax({
             url:url,
             dataType:"xml",
