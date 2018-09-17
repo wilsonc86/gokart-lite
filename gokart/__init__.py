@@ -179,6 +179,10 @@ def example(name):
     else:
         return bottle.template("embeddedmap.html",app=name)
 
+@bottle.route('/favicon.ico')
+def favicon_ico():
+    return bottle.static_file("favicon.ico",BASE_PATH)
+
 @bottle.route('/<app>')
 def index(app):
     try:
