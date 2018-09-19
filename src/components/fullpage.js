@@ -6,9 +6,12 @@ L.Control.Fullpage = L.Control.extend({
         position:"topright"
     },
     onAdd:function(map) {
+        if (!this._button.src) {
+            this._button.src = this.map.gokart.env["gokartService"] + '/dist/static/images/to-fullpage.svg';
+        }
         L.DomEvent.on(this._button,"click",this._onclick)
 
-        return this._button;
+        return this._div;
     },
 
     onRemove:function(map) {
@@ -30,7 +33,7 @@ L.Control.Fullpage = L.Control.extend({
                 top:"0px",
                 left:"0px"
             })
-            this._button.src = gokartEnv.gokartService + '/dist/static/images/to-fullpage.svg'
+            this._button.src = this.map.gokart.env["gokartService"] + '/dist/static/images/to-fullpage.svg'
         } else if (this.options["fullpageStyle"]) {
             $(this._map._container).css(this.options["fullpageStyle"])
         } else {
@@ -43,7 +46,7 @@ L.Control.Fullpage = L.Control.extend({
                 padding:"0px 0px 0px 0px",
                 margin:"0px 0px 0px 0px",
             })
-            this._button.src = gokartEnv.gokartService + '/dist/static/images/exit-fullpage.svg'
+            this._button.src = this.map.gokart.env["gokartService"] + '/dist/static/images/exit-fullpage.svg'
         }
         var center = this._map.getCenter()
         var zoom = this._map.getZoom()
@@ -56,22 +59,26 @@ L.Control.Fullpage = L.Control.extend({
 L.Control.Fullpage.addInitHook(function() {
     this._fullpage = false
     var vm = this
+    this._div = L.DomUtil.create('div')
     this._button = L.DomUtil.create('img');
-    this._button.src = gokartEnv.gokartService + '/dist/static/images/to-fullpage.svg';
-    this._button.id = "fullpage_control";
+    this._button.class = "gokart_fullpage_control";
+    L.DomUtil.addClass(this._button,"gokart_fullpage_control")
 
 
     this._onclick = this._onclick || function(ev) {
         vm.toggleFullpage()
     }
     L.DomEvent.disableClickPropagation(this._button)
+    $(this._div).append(this._button)
 })
 
-L.control.fullpage = function(opts) {
+L.control.fullpage = function(map,opts) {
     if (opts === undefined || opts === null) {
-        opts = (gokartEnv.fullpageControl && gokartEnv.fullpageControl.options)?gokartEnv.fullpageControl.options:{}
+        opts = (map.gokart.env["fullpageControl"] && map.gokart.env["fullpageControl"]["options"])?map.gokart.env["fullpageControl"]["options"]:{}
     } 
-    return new L.Control.Fullpage(opts)
+    var control = new L.Control.Fullpage(opts)
+    control.map = map
+    return control
 }
 
 export default L

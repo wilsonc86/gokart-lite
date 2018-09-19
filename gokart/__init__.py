@@ -172,6 +172,17 @@ def profile(app):
         traceback.print_exc()
         return traceback.format_exception_only(sys.exc_type,sys.exc_value)
 
+@bottle.route("/example/<name>")
+def example(name):
+    if os.path.exists(os.path.join(BASE_PATH,"{}.html".format(name))):
+        return bottle.template("{}.html".format(name))
+    else:
+        return bottle.template("embeddedmap.html",app=name)
+
+@bottle.route('/favicon.ico')
+def favicon_ico():
+    return bottle.static_file("favicon.ico",BASE_PATH)
+
 @bottle.route('/<app>')
 def index(app):
     try:

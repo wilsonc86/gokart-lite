@@ -1,5 +1,5 @@
 //indicative burning program
-var gokartEnv = {
+var ibpEnv = {
     title:"Indicative Burning Program",
 
     whoamiUrl:"/sso/profile",
@@ -22,7 +22,7 @@ var gokartEnv = {
         center:[-31.95296,115.86067 ],
         minZoom:2,
         maxZoom:17,
-        maxBounds:[[-45,108.6],[-10,155]],
+        maxBounds:[[-36,112.6],[-13,129.1]],
         bounds:[[-36,112.6],[-13,129.1]],
     
         zoomControl:true,
@@ -99,8 +99,8 @@ var gokartEnv = {
     },
     featureCountControl:{
         options:{
-            html:"<div style='color:#2a044e;font-weight:bold;font-size:18px'>Total Indicative Burning Program : <span id='todaysburns_count'></span> </div>",
-            featurecount_id : "todaysburns_count"
+            html:"<div style='color:#2a044e;font-weight:bold;font-size:18px'>Total Indicative Burning Program : <span id='ibp_count'></span> </div>",
+            featurecount_id : "ibp_count"
         }
     }
     

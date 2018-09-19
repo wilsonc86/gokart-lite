@@ -1,6 +1,7 @@
 import L from 'leaflet/dist/leaflet-src.js'
 import './components/fullpage.js'
 import './components/featurecount.js'
+import './components/layermetadata.js'
 import $ from 'jquery'
 
 //use 1024 as the tile size

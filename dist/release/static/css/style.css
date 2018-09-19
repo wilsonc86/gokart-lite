@@ -1,16 +1,16 @@
-#gokart_map  #feature_info table tbody th {
+.gokart_feature_info table tbody th {
     white-space: nowrap;
 }
-#gokart_map  #feature_info table tfoot td {
+.gokart_feature_info table tfoot td {
     text-align:center;
 }
 
-#gokart_map  #feature_info .featureinfo_navigator_button {
+.gokart_feature_info .featureinfo_navigator_button {
     width:16px;
     height:16px;
     cursor:pointer;
 }
-#gokart_map  #feature_info #featureinfo_feature_navigator {
+.gokart_feature_info .featureinfo_navigator {
     font-size:18px; 
     font-weight: bold;
     background: transparent;
@@ -18,7 +18,7 @@
     padding-right:10px;
 
 }
-#gokart_map  #fullpage_control {
+.gokart_fullpage_control {
     width:24px;
     height:24px;
     cursor:pointer;
