@@ -146,7 +146,7 @@ var todaysburnsEnv = {
         },
         featureCountControl:{
             options:{
-                html:"<div style='color:#2a044e;font-weight:bold;font-size:18px'>Total Today's Burn: <span id='todaysburns_count'></span> </div>",
+                html:"<div style='color:#2a044e;font-weight:bold;font-size:18px'>Total Today's Burns: <span id='todaysburns_count'></span> </div>",
                 featurecount_id : "todaysburns_count"
             }
         }
@@ -204,7 +204,7 @@ var todaysburnsEnv = {
         },
         featureCountControl:{
             options:{
-                html:"<div style='color:#2a044e;font-weight:bold;font-size:18px'>Total Yesterday's Burn: <span id='yesterdaysburns_count'></span> </div>",
+                html:"<div style='color:#2a044e;font-weight:bold;font-size:18px'>Total Yesterday's Burns: <span id='yesterdaysburns_count'></span> </div>",
                 featurecount_id : "yesterdaysburns_count"
             }
         }
